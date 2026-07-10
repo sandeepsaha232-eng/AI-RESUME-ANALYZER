@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowUp, ArrowDown, ChevronRight, Download, Eye, EyeOff, Layout, Plus, Save, Sparkles, Trash2, Check, X, Wand2 } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, Download, Eye, Layout, Plus, Sparkles, Trash2, Check, X } from 'lucide-react';
 import { Resume, Experience, Education, Project, Certification, Language } from '../types';
 
 interface ResumeBuilderProps {
@@ -284,8 +284,12 @@ export default function ResumeBuilder({ resume, onSave, onBack, onNavigateToExpo
     });
   };
 
-  // AI Actions Mock Helpers
-  const triggerAiAssist = (action: 'enhance-bullet' | 'generate-summary' | 'fix-grammar', text: string, target: typeof aiTargetField) => {
+  // AI Actions Real Helpers
+  const triggerAiAssist = async (
+    action: 'enhance-bullet' | 'generate-summary' | 'fix-grammar',
+    text: string,
+    target: typeof aiTargetField
+  ) => {
     setAiAction(action);
     setAiTargetField(target);
     setAiInputText(text);
@@ -293,22 +297,38 @@ export default function ResumeBuilder({ resume, onSave, onBack, onNavigateToExpo
     setAiPanelOpen(true);
     setAiLoading(true);
 
-    setTimeout(() => {
-      setAiLoading(false);
-      let resText = '';
-      if (action === 'enhance-bullet') {
-        resText = text 
-          ? `Spearheaded execution of high-impact strategic initiatives, resulting in a ${Math.floor(Math.random() * 15) + 15}% surge in key user-engagement metrics and trimming system latency by 25%.`
-          : 'Formulated and deployed robust React micro-frontend dashboards, increasing performance metrics and streamlining cross-functional engineering deliverables.';
-      } else if (action === 'generate-summary') {
-        resText = `Results-focused ${localResume.title || 'Professional'} with over 5 years of experience driving critical operations, coordinating cross-functional deliverables, and engineering scalable architectures. Proven success optimizing internal workflows, shrinking deployment latency by 30%, and elevating client retention scores.`;
-      } else if (action === 'fix-grammar') {
-        resText = text 
-          ? text.replace(/i did/gi, 'Successfully orchestrated').replace(/and got/gi, 'resulting in').trim()
-          : 'Orchestrated robust deployment lifecycles, accelerating delivery pipelines and ensuring comprehensive compliance audits.';
+    try {
+      let response: Response;
+      if (action === 'enhance-bullet' || action === 'fix-grammar') {
+        response = await fetch('/api/v1/improve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bullet: text,
+            action,
+            title: localResume.title,
+          }),
+        });
+      } else {
+        response = await fetch('/api/v1/generate-summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume: localResume }),
+        });
       }
-      setAiSuggestion(resText);
-    }, 1500);
+
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        throw new Error(json.error?.message || 'Failed to generate AI suggestion.');
+      }
+
+      setAiSuggestion(json.suggestion);
+    } catch (err: any) {
+      console.error(err);
+      setAiSuggestion(`Error: ${err.message || 'Could not reach AI model.'}`);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleApplyAiSuggestion = () => {
@@ -1289,7 +1309,7 @@ export default function ResumeBuilder({ resume, onSave, onBack, onNavigateToExpo
               </button>
               <button
                 type="button"
-                disabled={aiLoading || !aiSuggestion}
+                disabled={aiLoading || !aiSuggestion || aiSuggestion.startsWith('Error:')}
                 onClick={handleApplyAiSuggestion}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-sm flex items-center space-x-1"
               >

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Award, CheckCircle, CircleAlert, Sparkles, Target, Zap } from 'lucide-react';
+import { CircleAlert, CheckCircle, Sparkles, Target } from 'lucide-react';
 import { Resume, JDMatchResult } from '../types';
 
 interface JDMatchProps {
@@ -12,58 +12,34 @@ export default function JDMatch({ resumes }: JDMatchProps) {
   const [isMatching, setIsMatching] = useState(false);
   const [matchResult, setMatchResult] = useState<JDMatchResult | null>(null);
 
-  const handleMatchComparison = () => {
+  const handleMatchComparison = async () => {
     if (!selectedResumeId || !jdText.trim()) return;
 
     setIsMatching(true);
     setMatchResult(null);
 
-    // Simulate Match calculations
-    setTimeout(() => {
-      setIsMatching(false);
-
+    try {
       const resume = resumes.find(r => r.id === selectedResumeId);
-      const cleanJd = jdText.toLowerCase();
+      if (!resume) throw new Error('Selected resume not found');
 
-      // Simple keyword match indexing mock
-      const standardKeywords = ['react', 'typescript', 'kubernetes', 'aws', 'docker', 'graphql', 'system design', 'rest api', 'ci/cd', 'leadership'];
-      const missing: string[] = [];
-      const found: string[] = [];
-
-      standardKeywords.forEach((kw) => {
-        if (cleanJd.includes(kw)) {
-          // Check if resume contains it
-          const inSkills = resume?.skills.some(s => s.toLowerCase() === kw) || false;
-          const inSummary = resume?.summary.toLowerCase().includes(kw) || false;
-          if (inSkills || inSummary) {
-            found.push(kw);
-          } else {
-            missing.push(kw);
-          }
-        }
+      const response = await fetch('/api/v1/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume, jdText }),
       });
 
-      // Default to some items if JD is short
-      if (missing.length === 0 && found.length === 0) {
-        missing.push('system design', 'kubernetes', 'graphql');
-        found.push('react', 'typescript');
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        throw new Error(json.error?.message || 'Failed to compare resume with job description.');
       }
 
-      const matchPercent = Math.round((found.length / (found.length + missing.length)) * 100) || 45;
-
-      setMatchResult({
-        matchPercentage: Math.max(matchPercent, 35),
-        missingKeywords: missing,
-        skillGaps: [
-          ...missing.map(m => ({ skill: m, status: 'missing' as const })),
-          ...found.map(f => ({ skill: f, status: 'found' as const }))
-        ],
-        experienceGapNotes: cleanJd.includes('senior') || cleanJd.includes('lead')
-          ? 'The job posting calls for leadership coordinates and architectural decision-making. Ensure your experience bullet points lead with high-impact phrasing (e.g. Led, Spearheaded).'
-          : 'Your qualifications match the target experience tier. Focus your phrasing on execution reliability.'
-      });
-
-    }, 2000);
+      setMatchResult(json.data);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'Error comparing with Job Description. Make sure backend is running.');
+    } finally {
+      setIsMatching(false);
+    }
   };
 
   const getPercentageColor = (pct: number) => {

@@ -336,6 +336,19 @@ export default function App() {
               setActiveResumeId(id);
               setCurrentView('builder');
             }}
+            onAddResume={(newResume) => {
+              setResumes((prev) => [newResume, ...prev]);
+              // Trigger success notification
+              const uploadNotif: AppNotification = {
+                id: `notif-upload-${Date.now()}`,
+                type: 'success',
+                title: 'Resume Parsed & Scored',
+                body: `Successfully imported "${newResume.title}" from raw document. Try editing in Workspace!`,
+                createdAt: new Date().toISOString(),
+                read: false,
+              };
+              setNotifications((prev) => [uploadNotif, ...prev]);
+            }}
           />
         );
 
