@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { AlertCircle, ArrowRight, Award, CheckCircle, FileText, UploadCloud, Zap, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, FileText, UploadCloud, Zap } from 'lucide-react';
 import { Resume, AnalyzerResult } from '../types';
 
 interface ResumeAnalyzerProps {
   resumes: Resume[];
   onSelectResumeToEdit: (id: string) => void;
+  onAddResume?: (resume: Resume) => void;
 }
 
-export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit }: ResumeAnalyzerProps) {
+export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit, onAddResume }: ResumeAnalyzerProps) {
   const [selectedResumeId, setSelectedResumeId] = useState<string>(resumes[0]?.id || '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalyzerResult | null>(null);
   
-  // Local File uploading mocks
+  // Local File uploading
   const [uploadError, setUploadError] = useState('');
   const [dragActive, setDragActive] = useState(false);
 
@@ -44,7 +45,7 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit }: Resume
     }
   };
 
-  const processUploadedFile = (file: File) => {
+  const processUploadedFile = async (file: File) => {
     const extension = file.name.split('.').pop()?.toLowerCase();
     if (extension !== 'pdf' && extension !== 'docx') {
       setUploadError('Invalid format. Only PDF and DOCX files are allowed.');
@@ -55,96 +56,67 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit }: Resume
       return;
     }
 
-    // Trigger parsing simulation
     setIsAnalyzing(true);
     setAnalysisResult(null);
 
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      // Compile highly realistic mock analysis parameters
-      setAnalysisResult({
-        atsScore: 78,
-        categoryScores: {
-          formatting: 85,
-          keywords: 62,
-          readability: 74,
-          grammar: 90,
-          completeness: 80
-        },
-        missingSections: ['Certifications'],
-        recommendations: [
-          {
-            id: 'rec-1',
-            category: 'keywords',
-            text: 'Integrate more cloud infrastructure metrics (e.g. AWS, GCP) in your Senior role bullet points.',
-            severity: 'high',
-            section: 'experience'
-          },
-          {
-            id: 'rec-2',
-            category: 'readability',
-            text: 'Shorten experiences bullet points containing more than 3 lines of narrative. Focus on brief action outputs.',
-            severity: 'medium',
-            section: 'experience'
-          },
-          {
-            id: 'rec-3',
-            category: 'completeness',
-            text: 'Add a professional certification to authorize your credentials.',
-            severity: 'low',
-            section: 'certifications'
-          }
-        ]
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/v1/resumes/upload', {
+        method: 'POST',
+        body: formData,
       });
-    }, 2000);
+
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        throw new Error(json.error?.message || 'Failed to upload and parse resume.');
+      }
+
+      const { resume, analysis } = json.data;
+
+      if (onAddResume) {
+        onAddResume(resume);
+      }
+
+      setSelectedResumeId(resume.id);
+      setAnalysisResult(analysis);
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.message || 'Error parsing and analyzing document. Ensure backend is running.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  const handleAnalyzeSelectedResume = () => {
+  const handleAnalyzeSelectedResume = async () => {
     if (!selectedResumeId) return;
     const res = resumes.find((r) => r.id === selectedResumeId);
     if (!res) return;
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
+    setUploadError('');
 
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      
-      // Calculate dynamic score depending on resume fields
-      const bulletCount = res.experience.reduce((acc, curr) => acc + curr.bullets.length, 0);
-      const formatting = res.experience.length > 0 && res.education.length > 0 ? 88 : 45;
-      const keywords = res.skills.length >= 8 ? 84 : res.skills.length >= 4 ? 65 : 40;
-      const completeness = res.summary && res.experience.length && res.skills.length ? 90 : 60;
-      const ats = Math.round((formatting + keywords + completeness + 85) / 4);
-
-      setAnalysisResult({
-        atsScore: ats,
-        categoryScores: {
-          formatting,
-          keywords,
-          readability: bulletCount >= 4 ? 78 : 55,
-          grammar: 92,
-          completeness
-        },
-        missingSections: res.certifications.length === 0 ? ['Certifications'] : [],
-        recommendations: [
-          {
-            id: 'rec-r1',
-            category: 'keywords',
-            text: `Tailor skills tags denser. Your current list contains ${res.skills.length} parameters; target at least 10 key technical skills.`,
-            severity: res.skills.length < 8 ? 'high' : 'medium',
-            section: 'skills'
-          },
-          {
-            id: 'rec-r2',
-            category: 'completeness',
-            text: res.summary ? 'Refine executive summary metrics with concrete career milestones.' : 'Complete an executive summary to outline leadership coordinates.',
-            severity: 'medium',
-            section: 'summary'
-          }
-        ]
+    try {
+      const response = await fetch('/api/v1/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume: res }),
       });
-    }, 1800);
+
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        throw new Error(json.error?.message || 'Failed to analyze resume.');
+      }
+
+      setAnalysisResult(json.data);
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.message || 'Error communicating with analyzer backend.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   // Score visual utilities
@@ -194,11 +166,11 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit }: Resume
                 <select
                   value={selectedResumeId}
                   onChange={(e) => setSelectedResumeId(e.target.value)}
-                  className="flex-grow px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                  className="flex-grow px-3 py-2.5 bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
                 >
                   {resumes.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.title} ({r.personalInfo.fullName})
+                      {r.title} ({r.personalInfo.fullName || 'No Name'})
                     </option>
                   ))}
                 </select>
