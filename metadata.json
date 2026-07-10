@@ -1,0 +1,6 @@
+{
+  "name": "AI Resume Builder & Analyzer",
+  "description": "An elegant, highly polished React-based AI Resume Builder, ATS Analyzer, and Job Description Matcher featuring interactive resume workspace, client-side analysis, and beautiful visualizers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
