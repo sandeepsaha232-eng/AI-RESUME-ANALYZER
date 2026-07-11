@@ -25,7 +25,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     scene.fog = new THREE.FogExp2(0x05050f, 0.015);
 
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    // Move camera slightly further back to fit lamp and genie body nicely
     camera.position.set(0, 0.8, 4.8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -56,14 +55,14 @@ export default function AladdinBot({ state }: AladdinBotProps) {
 
     // Lamp Body (Flattened Sphere)
     const lampBodyGeo = new THREE.SphereGeometry(0.5, 32, 16);
-    lampBodyGeo.scale(1.2, 0.6, 0.8); // flattened shape
+    lampBodyGeo.scale(1.2, 0.6, 0.8);
     const lampBody = new THREE.Mesh(lampBodyGeo, goldMat);
     lampBody.position.y = 0.25;
     lampGroup.add(lampBody);
 
     // Lamp Spout/Nozzle
     const spoutGeo = new THREE.CylinderGeometry(0.06, 0.1, 0.6, 16);
-    spoutGeo.rotateZ(Math.PI / 3); // angled spout
+    spoutGeo.rotateZ(Math.PI / 3);
     const spout = new THREE.Mesh(spoutGeo, goldMat);
     spout.position.set(0.45, 0.45, 0);
     lampGroup.add(spout);
@@ -80,20 +79,20 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     const genieGroup = new THREE.Group();
     mainGroup.add(genieGroup);
 
-    // Custom Blueish cyber metal material for the Genie body
+    // Blueish cyber metal material for the Genie body
     const genieMat = new THREE.MeshStandardMaterial({
-      color: 0x0ea5e9, // Sky Blue
+      color: 0x0ea5e9,
       roughness: 0.2,
       metalness: 0.8,
     });
 
-    // Genie's Torso/Chest (Broad shoulder design)
+    // Genie's Torso/Chest
     const torsoGeo = new THREE.CylinderGeometry(0.55, 0.2, 0.8, 32);
     const torso = new THREE.Mesh(torsoGeo, genieMat);
     torso.position.y = 0.5;
     genieGroup.add(torso);
 
-    // Genie's Crossed Arms (represented by an elegant torus wrapping around the chest)
+    // Genie's Crossed Arms
     const armsGeo = new THREE.TorusGeometry(0.42, 0.12, 16, 32, Math.PI * 1.1);
     armsGeo.rotateX(Math.PI / 6);
     const arms = new THREE.Mesh(armsGeo, genieMat);
@@ -106,14 +105,14 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     head.position.y = 1.15;
     genieGroup.add(head);
 
-    // Genie's Cute Ponytail / Horn (Aladdin Jin look)
+    // Genie's Golden ponytail horn
     const hornGeo = new THREE.ConeGeometry(0.12, 0.5, 16);
     hornGeo.rotateX(-Math.PI / 6);
-    const horn = new THREE.Mesh(hornGeo, goldMat); // Golden horn on head
+    const horn = new THREE.Mesh(hornGeo, goldMat);
     horn.position.set(0, 1.5, -0.15);
     genieGroup.add(horn);
 
-    // Glowing Genie Eyes (Basic materials with emission simulation)
+    // Glowing Genie Eyes
     const eyeGeo = new THREE.SphereGeometry(0.08, 16, 16);
     const leftEyeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
     const rightEyeMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
@@ -127,7 +126,26 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     genieGroup.add(rightEye);
 
 
-    // 3. SWIRLING SMOKE TAIL (connecting spout of lamp to genie bottom)
+    // --- ADDED FACIAL FEATURES FOR EMOTIONAL STATES ---
+    // 2.1 Cute Metallic Gold Eyebrows
+    const eyebrowGeo = new THREE.BoxGeometry(0.14, 0.03, 0.04);
+    const leftEyebrow = new THREE.Mesh(eyebrowGeo, goldMat);
+    leftEyebrow.position.set(-0.16, 1.3, 0.35);
+    genieGroup.add(leftEyebrow);
+
+    const rightEyebrow = new THREE.Mesh(eyebrowGeo, goldMat);
+    rightEyebrow.position.set(0.16, 1.3, 0.35);
+    genieGroup.add(rightEyebrow);
+
+    // 2.2 Metallic Gold Expressive Mouth (adjusts size dynamically)
+    const mouthGeo = new THREE.SphereGeometry(0.07, 16, 16);
+    mouthGeo.scale(1.5, 0.3, 0.5); // flat initial shape
+    const mouth = new THREE.Mesh(mouthGeo, goldMat);
+    mouth.position.set(0, 0.98, 0.36);
+    genieGroup.add(mouth);
+
+
+    // 3. SWIRLING SMOKE TAIL
     const smokeSpheres: THREE.Mesh[] = [];
     const smokeCount = 12;
     const smokeGroup = new THREE.Group();
@@ -138,7 +156,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       const size = 0.28 * (1 - ratio * 0.75);
       const sphereGeo = new THREE.SphereGeometry(size, 16, 16);
 
-      // Neon cyan/magenta smoke material
       const smokeMat = new THREE.MeshStandardMaterial({
         color: new THREE.Color().setHSL(0.55 + ratio * 0.18, 0.95, 0.5),
         roughness: 0.1,
@@ -166,8 +183,13 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     scene.add(goldGlowLight);
 
 
-    // Mouse Tracking for dynamic look-around behavior
+    // Interaction & Animation variables
     const mouse = { x: 0, y: 0 };
+    let spinActive = false;
+    let spinProgress = 0;
+    let happyReactionActive = false;
+    let happyReactionTimer = 0;
+
     const handleMouseMove = (event: MouseEvent) => {
       const rect = currentMount.getBoundingClientRect();
       const relativeX = event.clientX - (rect.left + rect.width / 2);
@@ -176,7 +198,24 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       mouse.y = THREE.MathUtils.clamp(relativeY / (rect.height / 2), -1, 1);
     };
 
+    const triggerInteractions = () => {
+      spinActive = true;
+      spinProgress = 0;
+      happyReactionActive = true;
+      happyReactionTimer = clock.getElapsedTime();
+    };
+
+    const handleClick = () => {
+      triggerInteractions();
+    };
+
+    const handleMouseEnter = () => {
+      triggerInteractions();
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
+    currentMount.addEventListener('click', handleClick);
+    currentMount.addEventListener('mouseenter', handleMouseEnter);
 
     // Animation Loop
     let clock = new THREE.Clock();
@@ -186,26 +225,99 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       const elapsedTime = clock.getElapsedTime();
 
       // State eye colors
-      // idle = Cyan
-      // thinking = Magenta
-      // success = Emerald
-      // pointing = Yellow-gold
-      let targetColor = new THREE.Color(0x00f0ff);
+      let targetColor = new THREE.Color(0x00f0ff); // Idle cyan
       if (stateRef.current === 'thinking') {
-        targetColor = new THREE.Color(0xd946ef);
+        targetColor = new THREE.Color(0xd946ef); // Magenta
       } else if (stateRef.current === 'success') {
-        targetColor = new THREE.Color(0x10b981);
+        targetColor = new THREE.Color(0x10b981); // Emerald green
       } else if (stateRef.current === 'pointing') {
-        targetColor = new THREE.Color(0xffd700);
+        targetColor = new THREE.Color(0xffd700); // Golden
+      }
+
+      // Smooth spin rotation loop
+      if (spinActive) {
+        spinProgress += 0.12;
+        genieGroup.rotation.y = spinProgress;
+        if (spinProgress >= Math.PI * 2) {
+          spinActive = false;
+          genieGroup.rotation.y = 0;
+        }
+      } else {
+        genieGroup.rotation.y = Math.sin(elapsedTime * 0.7) * 0.1;
+      }
+
+      // Happy Reaction override
+      const isHappyReaction = happyReactionActive && (elapsedTime - happyReactionTimer < 3.0);
+      if (isHappyReaction) {
+        targetColor = new THREE.Color(0x10b981); // Emerald reaction glow
+
+        // Rapid happy blinking
+        const rapidBlink = Math.sin(elapsedTime * 15) > 0;
+        const reactionEyeScaleY = rapidBlink ? 0.2 : 1.0;
+        leftEye.scale.y = THREE.MathUtils.lerp(leftEye.scale.y, reactionEyeScaleY, 0.3);
+        rightEye.scale.y = THREE.MathUtils.lerp(rightEye.scale.y, reactionEyeScaleY, 0.3);
+
+        // Raised happy eyebrows
+        leftEyebrow.rotation.z = -0.15;
+        rightEyebrow.rotation.z = 0.15;
+        leftEyebrow.position.y = 1.32;
+        rightEyebrow.position.y = 1.32;
+
+        // Wide smiling mouth
+        mouth.scale.set(1.4, 0.8, 0.8);
+      } else {
+        // Normal blinking cycle (every 4 seconds)
+        const blinkCycle = elapsedTime % 4.0;
+        const isBlinking = blinkCycle > 3.85;
+        const targetEyeScaleY = isBlinking ? 0.05 : 1.0;
+        leftEye.scale.y = THREE.MathUtils.lerp(leftEye.scale.y, targetEyeScaleY, 0.25);
+        rightEye.scale.y = THREE.MathUtils.lerp(rightEye.scale.y, targetEyeScaleY, 0.25);
+
+        // State-specific eyebrow/mouth reactions
+        if (stateRef.current === 'thinking') {
+          // Concentrated inward angled eyebrows
+          leftEyebrow.rotation.z = 0.2;
+          rightEyebrow.rotation.z = -0.2;
+          leftEyebrow.position.y = 1.28;
+          rightEyebrow.position.y = 1.28;
+
+          // Tiny concentrated mouth (O-shape)
+          mouth.scale.set(0.4, 0.4, 0.4);
+        } else if (stateRef.current === 'pointing') {
+          // Talking lips movement
+          leftEyebrow.rotation.z = 0;
+          rightEyebrow.rotation.z = 0;
+          leftEyebrow.position.y = 1.3;
+          rightEyebrow.position.y = 1.3;
+
+          // Open/close oscillating mouth
+          mouth.scale.set(1.0, 0.2 + Math.abs(Math.sin(elapsedTime * 12)) * 0.8, 0.8);
+        } else if (stateRef.current === 'success') {
+          // Cheerful up-angled eyebrows
+          leftEyebrow.rotation.z = -0.12;
+          rightEyebrow.rotation.z = 0.12;
+          leftEyebrow.position.y = 1.31;
+          rightEyebrow.position.y = 1.31;
+
+          // Large happy smile mouth
+          mouth.scale.set(1.5, 0.8, 0.8);
+        } else {
+          // Calm standard neutral
+          leftEyebrow.rotation.z = 0;
+          rightEyebrow.rotation.z = 0;
+          leftEyebrow.position.y = 1.3;
+          rightEyebrow.position.y = 1.3;
+
+          mouth.scale.set(1.0, 0.3, 0.6);
+        }
       }
 
       leftEyeMat.color.lerp(targetColor, 0.1);
       rightEyeMat.color.lerp(targetColor, 0.1);
 
-      // Genie floating/hover motion (syncing chest and head)
+      // Genie floating/hover motion
       const hoverHeight = Math.sin(elapsedTime * 2.5) * 0.12;
       genieGroup.position.y = hoverHeight + 0.1;
-      genieGroup.rotation.y = Math.sin(elapsedTime * 0.7) * 0.1;
 
       // Pointer state flight surge
       if (stateRef.current === 'pointing') {
@@ -216,27 +328,26 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         mainGroup.position.y = 0;
       }
 
-      // Eye tracking
+      // Eye looking offset based on mouse location
       leftEye.position.x = -0.16 + mouse.x * 0.05;
       leftEye.position.y = 1.18 - mouse.y * 0.04;
       rightEye.position.x = 0.16 + mouse.x * 0.05;
       rightEye.position.y = 1.18 - mouse.y * 0.04;
 
-      // Head turn
+      // Head turn tracking mouse look-at targets
       head.rotation.y = THREE.MathUtils.lerp(head.rotation.y, mouse.x * 0.3, 0.1);
       head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, mouse.y * 0.2, 0.1);
 
-      // Animate the swirling mystical smoke tail connecting the Golden Spout to the Genie base
+      // Swirling smoke tail
       const spoutX = 0.45;
-      const spoutY = -0.55; // relative to spout offset
+      const spoutY = -0.55;
       const genieBottomX = genieGroup.position.x;
       const genieBottomY = genieGroup.position.y;
 
       for (let i = 0; i < smokeCount; i++) {
         const sphere = smokeSpheres[i];
-        const ratio = i / smokeCount; // 0 at spout, 1 at genie bottom
+        const ratio = i / smokeCount;
 
-        // Interpolate position from spout to genie base with elegant sine curves
         const tX = THREE.MathUtils.lerp(spoutX, genieBottomX, ratio);
         const tY = THREE.MathUtils.lerp(spoutY, genieBottomY, ratio);
 
@@ -269,8 +380,12 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      if (currentMount.contains(renderer.domElement)) {
-        currentMount.removeChild(renderer.domElement);
+      if (currentMount) {
+        currentMount.removeEventListener('click', handleClick);
+        currentMount.removeEventListener('mouseenter', handleMouseEnter);
+        if (currentMount.contains(renderer.domElement)) {
+          currentMount.removeChild(renderer.domElement);
+        }
       }
       renderer.dispose();
       baseGeo.dispose();
@@ -286,6 +401,8 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       eyeGeo.dispose();
       leftEyeMat.dispose();
       rightEyeMat.dispose();
+      eyebrowGeo.dispose();
+      mouthGeo.dispose();
       smokeSpheres.forEach(s => {
         s.geometry.dispose();
         if (Array.isArray(s.material)) {
@@ -299,7 +416,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
 
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <div ref={mountRef} className="w-48 h-48 select-none pointer-events-none" />
+      <div ref={mountRef} className="w-48 h-48 select-none cursor-pointer" />
     </div>
   );
 }

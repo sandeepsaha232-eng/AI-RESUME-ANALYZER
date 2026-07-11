@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React from 'react';
 
 interface CanvasVisualizerProps {
   intensity?: 'high' | 'low';
@@ -6,188 +6,130 @@ interface CanvasVisualizerProps {
 }
 
 export default function CanvasVisualizer({ intensity = 'high', reduceMotion = false }: CanvasVisualizerProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  // Let's create an array of floating dots with fixed, randomized offsets so they look completely organic
+  const dots = [
+    { size: 12, top: '15%', left: '10%', duration: '25s', delay: '0s', tx: '40px', ty: '-60px' },
+    { size: 36, top: '25%', left: '75%', duration: '35s', delay: '-5s', tx: '-80px', ty: '80px' },
+    { size: 8, top: '45%', left: '35%', duration: '18s', delay: '-2s', tx: '50px', ty: '50px' },
+    { size: 24, top: '65%', left: '20%', duration: '28s', delay: '-8s', tx: '-40px', ty: '-90px' },
+    { size: 16, top: '80%', left: '80%', duration: '30s', delay: '-3s', tx: '70px', ty: '-40px' },
+    { size: 48, top: '55%', left: '85%', duration: '40s', delay: '-12s', tx: '-100px', ty: '-60px' },
+    { size: 10, top: '10%', left: '50%', duration: '22s', delay: '-6s', tx: '-30px', ty: '70px' },
+    { size: 32, top: '85%', left: '45%', duration: '32s', delay: '-10s', tx: '90px', ty: '-80px' },
+    { size: 14, top: '35%', left: '90%', duration: '26s', delay: '-1s', tx: '-50px', ty: '90px' },
+    { size: 28, top: '70%', left: '55%', duration: '34s', delay: '-4s', tx: '60px', ty: '60px' },
+  ];
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let width = 0;
-    let height = 0;
-    
-    // Config based on motion and intensity
-    const particleCount = reduceMotion ? 0 : intensity === 'high' ? 80 : 30;
-    const maxDistance = intensity === 'high' ? 120 : 80;
-    const speedMultiplier = intensity === 'high' ? 0.35 : 0.2;
-
-    const particles: Array<{
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-    }> = [];
-
-    const mouse = {
-      x: -9999,
-      y: -9999,
-      radius: 140,
-    };
-
-    const handleResize = () => {
-      if (!canvas || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      canvas.width = width * window.devicePixelRatio;
-      canvas.height = height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-      
-      // Re-initialize particles on resize to fit bounds
-      initParticles();
-    };
-
-    const initParticles = () => {
-      particles.length = 0;
-      if (reduceMotion) return;
-      
-      for (let i = 0; i < particleCount; i++) {
-        particles.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * speedMultiplier,
-          vy: (Math.random() - 0.5) * speedMultiplier,
-          radius: Math.random() * 2 + 1,
-        });
-      }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    };
-
-    const handleMouseLeave = () => {
-      mouse.x = -9999;
-      mouse.y = -9999;
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      // Gradient background
-      const isDark = document.documentElement.classList.contains('dark');
-      ctx.fillStyle = isDark ? '#0B0B12' : '#F7F7FB';
-      ctx.fillRect(0, 0, width, height);
-
-      if (reduceMotion) {
-        // Simple subtle static mesh/glow when reduceMotion is true
-        ctx.beginPath();
-        ctx.arc(width * 0.7, height * 0.3, 200, 0, Math.PI * 2);
-        ctx.fillStyle = isDark ? 'rgba(139, 124, 252, 0.03)' : 'rgba(109, 93, 246, 0.03)';
-        ctx.fill();
-        return;
-      }
-
-      // Draw subtle background radial glow
-      const glowX = width * 0.75;
-      const glowY = height * 0.25;
-      const radialGlow = ctx.createRadialGradient(glowX, glowY, 50, glowX, glowY, 400);
-      radialGlow.addColorStop(0, isDark ? 'rgba(139, 124, 252, 0.08)' : 'rgba(109, 93, 246, 0.05)');
-      radialGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = radialGlow;
-      ctx.fillRect(0, 0, width, height);
-
-      // Update and Draw particles
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Bounce boundaries
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        // Mouse avoidance/attraction
-        if (mouse.x !== -9999) {
-          const dx = mouse.x - p.x;
-          const dy = mouse.y - p.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < mouse.radius) {
-            const force = (mouse.radius - dist) / mouse.radius;
-            p.x -= (dx / dist) * force * 1.5;
-            p.y -= (dy / dist) * force * 1.5;
-          }
-        }
-
-        // Draw particle
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = isDark ? 'rgba(139, 124, 252, 0.35)' : 'rgba(109, 93, 246, 0.3)';
-        ctx.fill();
-      });
-
-      // Draw connecting lines
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const p1 = particles[i];
-          const p2 = particles[j];
-          const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-
-          if (dist < maxDistance) {
-            const alpha = (1 - dist / maxDistance) * 0.15;
-            ctx.strokeStyle = isDark 
-              ? `rgba(139, 124, 252, ${alpha})` 
-              : `rgba(109, 93, 246, ${alpha})`;
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Draw active mouse glow
-      if (mouse.x !== -9999) {
-        const mouseGlow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, mouse.radius);
-        mouseGlow.addColorStop(0, isDark ? 'rgba(139, 124, 252, 0.05)' : 'rgba(109, 93, 246, 0.04)');
-        mouseGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = mouseGlow;
-        ctx.beginPath();
-        ctx.arc(mouse.x, mouse.y, mouse.radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      animationFrameId = requestAnimationFrame(draw);
-    };
-
-    window.addEventListener('resize', handleResize);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
-
-    handleResize();
-    draw();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (canvas) {
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseleave', handleMouseLeave);
-      }
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [intensity, reduceMotion]);
+  // Soft gradient blobs to add that premium "cosmic" feel without being distracting
+  const blobs = [
+    { color: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0,0,0,0) 70%)', width: '600px', height: '600px', top: '-10%', left: '-10%', duration: '40s', delay: '0s' },
+    { color: 'radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, rgba(0,0,0,0) 70%)', width: '500px', height: '500px', bottom: '15%', right: '-5%', duration: '45s', delay: '-10s' },
+    { color: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(0,0,0,0) 70%)', width: '550px', height: '550px', top: '40%', left: '50%', duration: '50s', delay: '-5s' },
+  ];
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full -z-10 overflow-hidden select-none pointer-events-none">
-      <canvas ref={canvasRef} className="block w-full h-full pointer-events-auto" />
+    <div className="fixed inset-0 w-full h-full -z-50 overflow-hidden select-none pointer-events-none bg-[#05050C]">
+      {/* Styles Injection */}
+      <style>{`
+        @keyframes float-blob {
+          0% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+          33% {
+            transform: translate3d(50px, -40px, 0) scale(1.1);
+          }
+          66% {
+            transform: translate3d(-30px, 50px, 0) scale(0.95);
+          }
+          100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+        }
+
+        @keyframes float-dot {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          50% {
+            transform: translate3d(var(--tx, 40px), var(--ty, -60px), 0);
+          }
+          100% {
+            transform: translate3d(0, 0, 0);
+          }
+        }
+
+        .premium-blob {
+          position: absolute;
+          border-radius: 50%;
+          mix-blend-mode: screen;
+          filter: blur(80px);
+          pointer-events: none;
+          will-change: transform;
+        }
+
+        .premium-dot {
+          position: absolute;
+          border-radius: 50%;
+          background-color: rgba(148, 163, 184, 0.25); /* slate-400 with 25% opacity, matches image */
+          pointer-events: none;
+          will-change: transform;
+        }
+
+        /* Animation class triggers */
+        .animate-blob-floating {
+          animation: float-blob var(--duration, 30s) ease-in-out var(--delay, 0s) infinite;
+        }
+
+        .animate-dot-floating {
+          animation: float-dot var(--duration, 25s) ease-in-out var(--delay, 0s) infinite;
+        }
+
+        /* Respect prefers-reduced-motion */
+        @media (prefers-reduced-motion: reduce) {
+          .animate-blob-floating,
+          .animate-dot-floating {
+            animation: none !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
+
+      {/* Render Blobs */}
+      {!reduceMotion && blobs.map((blob, index) => (
+        <div
+          key={`blob-${index}`}
+          className="premium-blob animate-blob-floating"
+          style={{
+            background: blob.color,
+            width: blob.width,
+            height: blob.height,
+            top: blob.top,
+            left: blob.left,
+            bottom: blob.bottom,
+            right: blob.right,
+            '--duration': blob.duration,
+            '--delay': blob.delay,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      {/* Render Floating Dots */}
+      {!reduceMotion && dots.map((dot, index) => (
+        <div
+          key={`dot-${index}`}
+          className="premium-dot animate-dot-floating"
+          style={{
+            width: `${dot.size}px`,
+            height: `${dot.size}px`,
+            top: dot.top,
+            left: dot.left,
+            '--duration': dot.duration,
+            '--delay': dot.delay,
+            '--tx': dot.tx,
+            '--ty': dot.ty,
+          } as React.CSSProperties}
+        />
+      ))}
     </div>
   );
 }
