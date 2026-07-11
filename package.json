@@ -7,7 +7,7 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:server": "tsx watch server.ts",
     "build:frontend": "vite build",
-    "build:server": "esbuild server.ts --bundle --platform=node --target=node21 --outfile=server.js",
+    "build:server": "esbuild server.ts --bundle --platform=node --target=node21 --format=esm --outfile=server.js --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "build": "npm run build:frontend && npm run build:server",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
+    "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
@@ -23,6 +24,7 @@
     "motion": "^12.23.24",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
+    "three": "^0.185.1",
     "vite": "^6.2.3"
   },
   "devDependencies": {

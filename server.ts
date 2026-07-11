@@ -13,9 +13,17 @@ import { Resume, AnalyzerResult, JDMatchResult, SkillGap } from './src/types';
 // Load environment variables
 dotenv.config();
 
-// Fix for ESModules __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Fix for ESModules and CommonJS compatibility for __dirname and __filename
+let __filename = '';
+let __dirname = '';
+
+try {
+  __filename = fileURLToPath(import.meta.url);
+  __dirname = path.dirname(__filename);
+} catch (e) {
+  __filename = typeof filename !== 'undefined' ? filename : path.join(process.cwd(), 'server.js');
+  __dirname = process.cwd();
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
