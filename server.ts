@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url';
 import multer from 'multer';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+import crypto from 'crypto';
 import { GoogleGenAI } from '@google/genai';
+import { supabase } from './src/supabaseClient';
 import { calculateAtsScore } from './src/scoringEngine';
 import { Resume, AnalyzerResult, JDMatchResult, SkillGap } from './src/types';
 
@@ -52,12 +54,561 @@ function cleanJsonResponse(text: string): string {
   return cleaned.trim();
 }
 
+// ==========================================
+// JWT AUTHENTICATION MIDDLEWARE
+// ==========================================
+const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Access token is required. Please sign in.'
+        }
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Your session has expired or is invalid. Please login again.'
+        }
+      });
+    }
+
+    // Attach verified user info to the request
+    (req as any).user = {
+      id: user.id,
+      email: user.email || ''
+    };
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Basic health check route
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// 1. POST /api/v1/analyze
+// ==========================================
+// AUTHENTICATION ENDPOINTS
+// ==========================================
+
+// 1. POST /api/v1/auth/signup
+app.post('/api/v1/auth/signup', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password, fullName } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        error: {
+          code: 'BAD_REQUEST',
+          message: 'Email and password are required'
+        }
+      });
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName || splitEmailName(email)
+        }
+      }
+    });
+
+    if (error) {
+      return res.status(400).json({
+        error: {
+          code: 'SIGNUP_FAILED',
+          message: error.message
+        }
+      });
+    }
+
+    res.status(201).json({
+      message: 'Signup successful',
+      data: {
+        user: data.user,
+        session: data.session
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+function splitEmailName(email: string): string {
+  return email.split('@')[0];
+}
+
+// 2. POST /api/v1/auth/login
+app.post('/api/v1/auth/login', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        error: {
+          code: 'BAD_REQUEST',
+          message: 'Email and password are required'
+        }
+      });
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      return res.status(400).json({
+        error: {
+          code: 'LOGIN_FAILED',
+          message: error.message
+        }
+      });
+    }
+
+    res.json({
+      message: 'Login successful',
+      data: {
+        user: data.user,
+        session: data.session
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 3. GET /api/v1/auth/me
+app.get('/api/v1/auth/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error || !profile) {
+      return res.status(404).json({
+        error: {
+          code: 'PROFILE_NOT_FOUND',
+          message: 'User profile was not initialized automatically'
+        }
+      });
+    }
+
+    res.json({ data: profile });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 4. PUT /api/v1/auth/profile
+app.put('/api/v1/auth/profile', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { fullName, targetTitle, experienceLevel } = req.body;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: fullName,
+        onboarded_target_title: targetTitle,
+        experience_level: experienceLevel,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        error: {
+          code: 'PROFILE_UPDATE_FAILED',
+          message: error.message
+        }
+      });
+    }
+
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ==========================================
+// DATABASE RELATIONAL MAPPERS
+// ==========================================
+
+async function fetchFullResume(resumeId: string, userId: string): Promise<Resume | null> {
+  // 1. Fetch main resume row
+  const { data: resumeRow, error: resErr } = await supabase
+    .from('resumes')
+    .select('*')
+    .eq('id', resumeId)
+    .eq('user_id', userId)
+    .single();
+
+  if (resErr || !resumeRow) return null;
+
+  // 2. Fetch profile details
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  // 3. Fetch experience rows
+  const { data: expRows } = await supabase
+    .from('experience')
+    .select('*')
+    .eq('resume_id', resumeId)
+    .order('created_at', { ascending: true });
+
+  // 4. Fetch education rows
+  const { data: eduRows } = await supabase
+    .from('education')
+    .select('*')
+    .eq('resume_id', resumeId)
+    .order('created_at', { ascending: true });
+
+  // 5. Fetch project rows
+  const { data: projRows } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('resume_id', resumeId)
+    .order('created_at', { ascending: true });
+
+  // 6. Fetch skills
+  const { data: skillRows } = await supabase
+    .from('skills')
+    .select('skill_name')
+    .eq('resume_id', resumeId);
+
+  const personalInfo = {
+    fullName: profileRow?.full_name || '',
+    email: profileRow?.email || '',
+    phone: '',
+    location: '',
+    website: '',
+    linkedin: '',
+    github: ''
+  };
+
+  return {
+    id: resumeRow.id,
+    title: resumeRow.title,
+    lastEdited: resumeRow.updated_at,
+    atsScore: resumeRow.ats_score,
+    summary: resumeRow.summary || '',
+    personalInfo,
+    experience: (expRows || []).map(row => ({
+      id: row.id,
+      company: row.company,
+      position: row.position,
+      location: row.location || '',
+      startDate: row.start_date || '',
+      endDate: row.end_date || '',
+      current: row.current || false,
+      bullets: row.bullets || []
+    })),
+    education: (eduRows || []).map(row => ({
+      id: row.id,
+      institution: row.institution,
+      degree: row.degree,
+      fieldOfStudy: row.field_of_study || '',
+      location: row.location || '',
+      startDate: row.start_date || '',
+      endDate: row.end_date || '',
+      current: row.current || false,
+      gpa: row.gpa || ''
+    })),
+    projects: (projRows || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      role: row.role || '',
+      url: row.url || '',
+      startDate: row.start_date || '',
+      endDate: row.end_date || '',
+      bullets: row.bullets || []
+    })),
+    skills: (skillRows || []).map(row => row.skill_name),
+    certifications: resumeRow.certifications || [],
+    languages: resumeRow.languages || []
+  };
+}
+
+async function saveFullResume(resume: Resume, userId: string): Promise<string> {
+  const isNew = !resume.id || !resume.id.includes('-'); // check if standard uuid, if not generate one
+  const resumeId = isNew ? crypto.randomUUID() : resume.id;
+
+  // 1. Upsert resumes main record
+  const { error: resErr } = await supabase
+    .from('resumes')
+    .upsert({
+      id: resumeId,
+      user_id: userId,
+      title: resume.title || 'Untitled Resume',
+      summary: resume.summary || '',
+      ats_score: resume.atsScore || 0,
+      certifications: resume.certifications || [],
+      languages: resume.languages || [],
+      updated_at: new Date().toISOString()
+    });
+
+  if (resErr) throw resErr;
+
+  // 2. Clear old child elements
+  await supabase.from('experience').delete().eq('resume_id', resumeId);
+  await supabase.from('education').delete().eq('resume_id', resumeId);
+  await supabase.from('projects').delete().eq('resume_id', resumeId);
+  await supabase.from('skills').delete().eq('resume_id', resumeId);
+
+  // 3. Re-insert Experiences
+  if (resume.experience && resume.experience.length > 0) {
+    const experiencesToInsert = resume.experience.map(exp => ({
+      resume_id: resumeId,
+      company: exp.company,
+      position: exp.position,
+      location: exp.location || '',
+      start_date: exp.startDate || '',
+      end_date: exp.endDate || '',
+      current: exp.current || false,
+      bullets: exp.bullets || []
+    }));
+    const { error: expErr } = await supabase.from('experience').insert(experiencesToInsert);
+    if (expErr) throw expErr;
+  }
+
+  // 4. Re-insert Education
+  if (resume.education && resume.education.length > 0) {
+    const educationToInsert = resume.education.map(edu => ({
+      resume_id: resumeId,
+      institution: edu.institution,
+      degree: edu.degree,
+      field_of_study: edu.fieldOfStudy || '',
+      location: edu.location || '',
+      start_date: edu.startDate || '',
+      end_date: edu.endDate || '',
+      current: edu.current || false,
+      gpa: edu.gpa || ''
+    }));
+    const { error: eduErr } = await supabase.from('education').insert(educationToInsert);
+    if (eduErr) throw eduErr;
+  }
+
+  // 5. Re-insert Projects
+  if (resume.projects && resume.projects.length > 0) {
+    const projectsToInsert = resume.projects.map(proj => ({
+      resume_id: resumeId,
+      name: proj.name,
+      role: proj.role || '',
+      url: proj.url || '',
+      start_date: proj.startDate || '',
+      end_date: proj.endDate || '',
+      bullets: proj.bullets || []
+    }));
+    const { error: projErr } = await supabase.from('projects').insert(projectsToInsert);
+    if (projErr) throw projErr;
+  }
+
+  // 6. Re-insert Skills
+  if (resume.skills && resume.skills.length > 0) {
+    const skillsToInsert = resume.skills.map(skill => ({
+      resume_id: resumeId,
+      skill_name: skill
+    }));
+    const { error: skillErr } = await supabase.from('skills').insert(skillsToInsert);
+    if (skillErr) throw skillErr;
+  }
+
+  return resumeId;
+}
+
+// ==========================================
+// RESUMES CRUD API ENDPOINTS
+// ==========================================
+
+// 1. GET /api/v1/resumes (List all resumes)
+app.get('/api/v1/resumes', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { data: resumeRows, error } = await supabase
+      .from('resumes')
+      .select('id')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      return res.status(400).json({ error: { message: error.message } });
+    }
+
+    const fullResumes: Resume[] = [];
+    for (const row of resumeRows || []) {
+      const fullRes = await fetchFullResume(row.id, userId);
+      if (fullRes) fullResumes.push(fullRes);
+    }
+
+    res.json({ data: fullResumes });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 2. GET /api/v1/resumes/:id (Fetch single resume details)
+app.get('/api/v1/resumes/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const resumeId = req.params.id;
+    const fullRes = await fetchFullResume(resumeId, userId);
+
+    if (!fullRes) {
+      return res.status(404).json({
+        error: {
+          code: 'RESUME_NOT_FOUND',
+          message: 'The requested resume scroll was not found.'
+        }
+      });
+    }
+
+    res.json({ data: fullRes });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 3. POST /api/v1/resumes (Create/save new resume)
+app.post('/api/v1/resumes', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { resume } = req.body;
+
+    if (!resume) {
+      return res.status(400).json({
+        error: {
+          code: 'BAD_REQUEST',
+          message: 'Resume object is required'
+        }
+      });
+    }
+
+    const savedId = await saveFullResume(resume, userId);
+    const savedResume = await fetchFullResume(savedId, userId);
+
+    res.status(201).json({ data: savedResume });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 4. PUT /api/v1/resumes/:id (Update existing resume details)
+app.put('/api/v1/resumes/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { resume } = req.body;
+
+    if (!resume) {
+      return res.status(400).json({
+        error: {
+          code: 'BAD_REQUEST',
+          message: 'Resume object is required'
+        }
+      });
+    }
+
+    resume.id = req.params.id; // enforce url param id
+    const savedId = await saveFullResume(resume, userId);
+    const savedResume = await fetchFullResume(savedId, userId);
+
+    res.json({ data: savedResume });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5. DELETE /api/v1/resumes/:id (Delete resume details)
+app.delete('/api/v1/resumes/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const resumeId = req.params.id;
+
+    const { error } = await supabase
+      .from('resumes')
+      .delete()
+      .eq('id', resumeId)
+      .eq('user_id', userId);
+
+    if (error) {
+      return res.status(400).json({ error: { message: error.message } });
+    }
+
+    res.json({ message: 'Resume successfully deleted from database records.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ==========================================
+// JOB DESCRIPTIONS API
+// ==========================================
+
+// GET /api/v1/job-descriptions
+app.get('/api/v1/job-descriptions', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { data, error } = await supabase
+      .from('job_descriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+
+    if (error) return res.status(400).json({ error: { message: error.message } });
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/job-descriptions
+app.post('/api/v1/job-descriptions', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user.id;
+    const { title, company, jdText } = req.body;
+
+    const { data, error } = await supabase
+      .from('job_descriptions')
+      .insert({
+        user_id: userId,
+        title: title || 'Target Role',
+        company: company || '',
+        jd_text: jdText
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: { message: error.message } });
+    res.status(201).json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ==========================================
+// CORE RESUME RECONSTRUCTION AND ANALYSIS ENDPOINTS
+// ==========================================
+
+// POST /api/v1/analyze
 // Performs deterministic scoring and generates recommendations via Gemini API
 app.post('/api/v1/analyze', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -74,7 +625,6 @@ app.post('/api/v1/analyze', async (req: Request, res: Response, next: NextFuncti
 
     // B. Call Gemini to generate recommendations explaining/tailoring to the score
     if (!geminiApiKey) {
-      // Return deterministic results with some general recommendations if no API key is set
       analysisResult.recommendations = [
         {
           id: 'rec-1',
@@ -154,7 +704,7 @@ Output ONLY a valid JSON object. No markdown block, no intro, no wrap.`;
   }
 });
 
-// 2. POST /api/v1/resumes/upload
+// POST /api/v1/resumes/upload
 // Parses uploaded document, creates a structured Resume, runs ATS scoring & recommendations
 app.post('/api/v1/resumes/upload', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -367,7 +917,6 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
       ];
     }
 
-    // Return BOTH the parsed Resume JSON object AND the ATS Analyzer Result!
     res.json({
       data: {
         resume: parsedResume,
@@ -380,7 +929,7 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
   }
 });
 
-// 3. POST /api/v1/compare
+// POST /api/v1/compare
 // Performs AI-based matching and gap analysis against a job description
 app.post('/api/v1/compare', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -393,7 +942,6 @@ app.post('/api/v1/compare', async (req: Request, res: Response, next: NextFuncti
     }
 
     if (!geminiApiKey) {
-      // Return beautiful mock results if no API key is configured
       const mockResult: JDMatchResult = {
         matchPercentage: 70,
         missingKeywords: ['system design', 'kubernetes', 'graphql'],
@@ -458,7 +1006,7 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
   }
 });
 
-// 4. POST /api/v1/improve
+// POST /api/v1/improve
 // Enhances a resume bullet point using Gemini AI
 app.post('/api/v1/improve', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -494,7 +1042,7 @@ Output ONLY the rewritten bullet point in plain text. Do not wrap in quotes. No 
   }
 });
 
-// 5. POST /api/v1/generate-summary
+// POST /api/v1/generate-summary
 // Generates a professional summary from a resume profile using Gemini AI
 app.post('/api/v1/generate-summary', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -557,14 +1105,12 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 
 // Fallback all other routes to SPA index.html in production
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  // If request is for an API that doesn't exist, return 404
   if (req.path.startsWith('/api/')) {
     const err: AppError = new Error(`API endpoint ${req.path} not found`);
     err.status = 404;
     err.code = 'ENDPOINT_NOT_FOUND';
     return next(err);
   }
-  // Otherwise serve index.html for React SPA
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) {
       res.status(404).send('Not Found');
