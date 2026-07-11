@@ -20,17 +20,19 @@ export default function App() {
   const [userEmail, setUserEmail] = useState<string | null>(() => {
     return localStorage.getItem('elevate_user_email') || null;
   });
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('elevate_session_token') || null;
+  });
   const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
     return localStorage.getItem('elevate_is_onboarded') === 'true';
   });
 
   // 2. Navigation Routing
-  // 'dashboard' | 'builder' | 'analyzer' | 'jd-match' | 'settings' | 'notifications' | 'export'
   const [currentView, setCurrentView] = useState<string>('dashboard');
   const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // 3. Central Resume Database with localStorage Persistence
+  // 3. Central Resume Database
   const [resumes, setResumes] = useState<Resume[]>(() => {
     const saved = localStorage.getItem('elevate_resumes');
     if (saved) {
@@ -42,6 +44,29 @@ export default function App() {
     }
     return mockResumes;
   });
+
+  // Load from remote database on session init
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchResumes = async () => {
+      try {
+        const response = await fetch('/api/v1/resumes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setResumes(result.data);
+        }
+      } catch (e) {
+        console.error('Failed to load remote portfolio resumes:', e);
+      }
+    };
+
+    fetchResumes();
+  }, [token]);
 
   // 4. Notifications Seed Database
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -55,7 +80,7 @@ export default function App() {
         type: 'success',
         title: 'Welcome to Elevate Resume!',
         body: 'Your carrier workspace has been initialized successfully. Cloud backup sync state is active.',
-        createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
         read: false
       },
       {
@@ -63,7 +88,7 @@ export default function App() {
         type: 'info',
         title: 'ATS Parser Auditing Configured',
         body: 'We updated keyword density benchmark indices to match the 2026 hiring metrics. Run an analysis to check alignments.',
-        createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        createdAt: new Date(Date.now() - 7200000).toISOString(),
         read: true
       }
     ];
@@ -95,7 +120,6 @@ export default function App() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      // Trigger a clean reconnection notification
       const newNotif: AppNotification = {
         id: `notif-online-${Date.now()}`,
         type: 'success',
@@ -143,23 +167,27 @@ export default function App() {
   }, [settings.theme]);
 
   // Auth Triggers
-  const handleAuthSuccess = (email: string) => {
+  const handleAuthSuccess = (email: string, sessionToken: string) => {
     setUserEmail(email);
+    setToken(sessionToken);
     localStorage.setItem('elevate_user_email', email);
+    localStorage.setItem('elevate_session_token', sessionToken);
     setCurrentView('dashboard');
   };
 
   const handleLogout = () => {
     setUserEmail(null);
+    setToken(null);
     setIsOnboarded(false);
     localStorage.removeItem('elevate_user_email');
+    localStorage.removeItem('elevate_session_token');
     localStorage.removeItem('elevate_is_onboarded');
     setCurrentView('dashboard');
   };
 
   const handleDeleteAccount = () => {
-    // Completely wipe all local states
     setUserEmail(null);
+    setToken(null);
     setIsOnboarded(false);
     setResumes(mockResumes);
     setNotifications([]);
@@ -168,7 +196,7 @@ export default function App() {
   };
 
   // Onboarding Completed
-  const handleOnboardingComplete = (data: {
+  const handleOnboardingComplete = async (data: {
     targetTitle: string;
     experienceLevel: string;
     skills: string[];
@@ -200,11 +228,46 @@ export default function App() {
       languages: []
     };
 
+    // Save profile attributes to DB
+    if (token) {
+      try {
+        await fetch('/api/v1/auth/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            fullName: userEmail ? userEmail.split('@')[0] : 'Professional Candidate',
+            targetTitle: data.targetTitle,
+            experienceLevel: data.experienceLevel
+          })
+        });
+
+        const response = await fetch('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: newResume })
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setResumes([result.data, ...resumes]);
+          setActiveResumeId(result.data.id);
+          setCurrentView('builder');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to sync onboarding details with DB:', err);
+      }
+    }
+
     setResumes([newResume, ...resumes]);
     setActiveResumeId(newResume.id);
     setCurrentView('builder');
 
-    // Emit confirmation notification
     const welcomeNotif: AppNotification = {
       id: `notif-onboard-${Date.now()}`,
       type: 'success',
@@ -217,7 +280,7 @@ export default function App() {
   };
 
   // Resume Database Operations
-  const handleCreateResume = () => {
+  const handleCreateResume = async () => {
     const newResume: Resume = {
       id: `res-${Date.now()}`,
       title: 'Untitled Resume Draft',
@@ -241,12 +304,34 @@ export default function App() {
       languages: []
     };
 
+    if (token) {
+      try {
+        const response = await fetch('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: newResume })
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setResumes([result.data, ...resumes]);
+          setActiveResumeId(result.data.id);
+          setCurrentView('builder');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to create resume in remote DB:', err);
+      }
+    }
+
     setResumes([newResume, ...resumes]);
     setActiveResumeId(newResume.id);
     setCurrentView('builder');
   };
 
-  const handleDuplicateResume = (id: string) => {
+  const handleDuplicateResume = async (id: string) => {
     const source = resumes.find(r => r.id === id);
     if (!source) return;
 
@@ -255,9 +340,28 @@ export default function App() {
     copy.title = `${source.title} (Copy)`;
     copy.lastEdited = new Date().toISOString();
 
+    if (token) {
+      try {
+        const response = await fetch('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: copy })
+        });
+        const result = await response.json();
+        if (response.ok && result.data) {
+          setResumes([result.data, ...resumes]);
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to duplicate resume in remote DB:', err);
+      }
+    }
+
     setResumes([copy, ...resumes]);
 
-    // Push notification
     const dupNotif: AppNotification = {
       id: `notif-dup-${Date.now()}`,
       type: 'info',
@@ -269,10 +373,23 @@ export default function App() {
     setNotifications(prev => [dupNotif, ...prev]);
   };
 
-  const handleDeleteResume = (id: string) => {
+  const handleDeleteResume = async (id: string) => {
     const target = resumes.find(r => r.id === id);
     setResumes(resumes.filter(r => r.id !== id));
     
+    if (token) {
+      try {
+        await fetch(`/api/v1/resumes/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Failed to delete resume from remote DB:', err);
+      }
+    }
+
     if (target) {
       const delNotif: AppNotification = {
         id: `notif-del-${Date.now()}`,
@@ -286,8 +403,23 @@ export default function App() {
     }
   };
 
-  const handleSaveResume = (updated: Resume) => {
+  const handleSaveResume = async (updated: Resume) => {
     setResumes(resumes.map(r => r.id === updated.id ? updated : r));
+
+    if (token) {
+      try {
+        await fetch(`/api/v1/resumes/${updated.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: updated })
+        });
+      } catch (err) {
+        console.error('Failed to save resume updates in remote DB:', err);
+      }
+    }
   };
 
   // Notification actions
@@ -338,7 +470,6 @@ export default function App() {
             }}
             onAddResume={(newResume) => {
               setResumes((prev) => [newResume, ...prev]);
-              // Trigger success notification
               const uploadNotif: AppNotification = {
                 id: `notif-upload-${Date.now()}`,
                 type: 'success',
@@ -394,38 +525,63 @@ export default function App() {
     }
   };
 
-  // View-checking for global shell visibility (hide shell on landing/auth/onboarding)
   const isGlobalShellVisible = userEmail !== null && isOnboarded;
-
-  // Unread notification counter
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Guest Sign-in upon Instant Frictionless Resume Parse
-  const handleInstantResumeParsed = (parsed: Resume) => {
+  const handleInstantResumeParsed = async (parsed: Resume) => {
+    // Generate random secure password for guest users so they are registered securely to Supabase
     const guestEmail = `guest-${Math.floor(1000 + Math.random() * 9000)}@elevateresume.space`;
+    const guestPassword = `pwd-${Math.random().toString(36).substring(2, 10)}X1!`;
+
+    try {
+      // 1. Sign up guest
+      const signUpRes = await fetch('/api/v1/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: guestEmail, password: guestPassword, fullName: 'Aladdin Guest' })
+      });
+      const signUpJson = await signUpRes.json();
+
+      if (signUpRes.ok && signUpJson.data?.session?.access_token) {
+        const guestToken = signUpJson.data.session.access_token;
+        setUserEmail(guestEmail);
+        setToken(guestToken);
+        setIsOnboarded(true);
+        localStorage.setItem('elevate_user_email', guestEmail);
+        localStorage.setItem('elevate_session_token', guestToken);
+        localStorage.setItem('elevate_is_onboarded', 'true');
+
+        // 2. Save parsed resume to guest's remote database account
+        const saveRes = await fetch('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${guestToken}`
+          },
+          body: JSON.stringify({ resume: parsed })
+        });
+        const saveJson = await saveRes.json();
+        if (saveRes.ok && saveJson.data) {
+          setResumes([saveJson.data, ...resumes]);
+          setActiveResumeId(saveJson.data.id);
+          setCurrentView('builder');
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to securely register instant guest account:', err);
+    }
+
+    // Fallback if API fails
     setUserEmail(guestEmail);
     setIsOnboarded(true);
     localStorage.setItem('elevate_user_email', guestEmail);
     localStorage.setItem('elevate_is_onboarded', 'true');
-
-    // Add the newly parsed resume to list and focus it
     setResumes([parsed, ...resumes]);
     setActiveResumeId(parsed.id);
     setCurrentView('builder');
-
-    // Create a gorgeous welcome notification
-    const welcomeNotif: AppNotification = {
-      id: `notif-instant-${Date.now()}`,
-      type: 'success',
-      title: 'Workspace Initialized! 🔮',
-      body: `Your uploaded resume "${parsed.title}" is loaded in your luxury workspace. Let's start auto-fixing!`,
-      createdAt: new Date().toISOString(),
-      read: false
-    };
-    setNotifications(prev => [welcomeNotif, ...prev]);
   };
 
-  // Render entry views depending on Auth/Onboarding levels
   if (!userEmail) {
     if (currentView === 'auth-login' || currentView === 'auth-register') {
       return (
@@ -454,11 +610,9 @@ export default function App() {
     );
   }
 
-  // Large Navigation Frame
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       
-      {/* Persisted Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500 text-white text-xs font-bold py-2 px-4 text-center flex items-center justify-center space-x-2 z-50 shrink-0 no-print">
           <CircleWarning />
@@ -470,7 +624,6 @@ export default function App() {
       <nav className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50 h-16 shrink-0 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           
-          {/* Logo brand */}
           <div
             onClick={() => setCurrentView('dashboard')}
             className="flex items-center space-x-2.5 cursor-pointer hover:opacity-85 select-none"
@@ -483,7 +636,6 @@ export default function App() {
             </span>
           </div>
 
-          {/* Desktop Links */}
           <div className="hidden md:flex items-center space-x-1.5">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -510,10 +662,8 @@ export default function App() {
             })}
           </div>
 
-          {/* Right utility toolbar */}
           <div className="flex items-center space-x-3">
             
-            {/* Notification bell utility */}
             <button
               onClick={() => setCurrentView('notifications')}
               className={`p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors relative ${
@@ -528,7 +678,6 @@ export default function App() {
               )}
             </button>
 
-            {/* Avatar Profile */}
             <button
               onClick={() => setCurrentView('settings')}
               className={`p-2 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg transition-all flex items-center space-x-2 ${
@@ -543,7 +692,6 @@ export default function App() {
               </span>
             </button>
 
-            {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2.5 bg-slate-100 dark:bg-slate-900 text-slate-500 rounded-xl md:hidden"
@@ -555,7 +703,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Mobile Drawer Menu overlays */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm md:hidden flex justify-end no-print">
           <div className="w-2/3 max-w-[280px] bg-white dark:bg-slate-950 h-full p-6 border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between">
@@ -612,7 +759,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Core Display Content frame */}
       <main className="flex-grow">
         {renderCurrentView()}
       </main>
@@ -621,7 +767,6 @@ export default function App() {
   );
 }
 
-// Simple internal alert indicator helper
 function CircleWarning() {
   return (
     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

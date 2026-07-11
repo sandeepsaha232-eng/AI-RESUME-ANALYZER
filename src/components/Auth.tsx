@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, Eye, EyeOff, Lock, Mail, Sparkles, User } from 'lucide-react';
 
 interface AuthProps {
-  onSuccess: (email: string) => void;
+  onSuccess: (email: string, token: string) => void;
   onCancel: () => void;
 }
 
@@ -64,7 +64,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
     return 'bg-emerald-500';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError('');
     setShowForgotSuccess(false);
@@ -76,11 +76,41 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
 
     setIsSubmitting(true);
 
-    // Simulate Network Latency
-    setTimeout(() => {
+    try {
+      const endpoint = isLogin ? '/api/v1/auth/login' : '/api/v1/auth/signup';
+      const body: any = { email, password };
+      if (!isLogin) {
+        body.fullName = fullName;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || 'Authentication failed');
+      }
+
+      const sessionToken = result.data?.session?.access_token;
+      const verifiedEmail = result.data?.user?.email || email;
+
+      if (!sessionToken) {
+        throw new Error('No session token returned from registration.');
+      }
+
+      onSuccess(verifiedEmail, sessionToken);
+    } catch (err: any) {
+      console.error(err);
+      setServerError(err.message || 'An unexpected authentication error occurred.');
+    } finally {
       setIsSubmitting(false);
-      onSuccess(email || 'candidate@example.com');
-    }, 1200);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -99,10 +129,9 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
   const strengthScore = getPasswordStrength();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col md:flex-row transition-colors duration-300 font-sans">
       {/* Decorative Side Column on desktop */}
       <div className="hidden md:flex md:w-5/12 bg-indigo-600 dark:bg-indigo-900 relative overflow-hidden flex-col justify-between p-12 text-white">
-        {/* Particle Overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
         
         <div className="relative z-10 flex items-center space-x-2.5">
@@ -115,24 +144,23 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
         </div>
 
         <div className="relative z-10 space-y-4">
-          <h2 className="text-3xl font-bold tracking-tight">Unlock Your True Career Potential</h2>
-          <p className="text-white/80 font-light leading-relaxed text-sm">
+          <h2 className="text-3xl font-bold tracking-tight font-sans">Unlock Your True Career Potential</h2>
+          <p className="text-white/80 font-light leading-relaxed text-sm font-sans">
             Join thousands of professionals securing interviews at leading companies. Build your perfect ATS-optimized resume, evaluate score matrices, and bridge the skill gaps easily.
           </p>
         </div>
 
-        <p className="relative z-10 text-xs text-white/50">
-          © 2026 Elevate Resume. Fully private. Encrypted locally.
+        <p className="relative z-10 text-xs text-white/50 font-sans">
+          © 2026 Elevate Resume. Fully private. Saved securely to database.
         </p>
       </div>
 
       {/* Main Auth Form Column */}
       <div className="flex-grow flex flex-col justify-between p-6 sm:p-12 md:w-7/12 max-w-xl mx-auto w-full">
-        {/* Header toolbar */}
         <div className="flex items-center justify-between">
           <button
             onClick={onCancel}
-            className="flex items-center space-x-1 text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors py-2 px-1"
+            className="flex items-center space-x-1 text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors py-2 px-1 focus:outline-none"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Back</span>
@@ -185,7 +213,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 dark:text-slate-100"
                   />
                 </div>
               </div>
@@ -203,7 +231,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={() => validateEmail(email)}
                   placeholder="name@example.com"
-                  className={`w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors ${
+                  className={`w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 dark:text-slate-100 ${
                     emailError ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
@@ -222,7 +250,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-xs font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+                    className="text-xs font-medium text-indigo-600 hover:text-indigo-500 transition-colors focus:outline-none"
                   >
                     Forgot Password?
                   </button>
@@ -236,14 +264,14 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={() => validatePassword(password)}
                   placeholder="••••••••"
-                  className={`w-full pl-10 pr-10 py-3 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors ${
+                  className={`w-full pl-10 pr-10 py-3 bg-white dark:bg-slate-900 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors text-slate-900 dark:text-slate-100 ${
                     passwordError ? 'border-red-500 focus:border-red-500' : 'border-slate-200 dark:border-slate-800'
                   }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -252,7 +280,6 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                 <p className="text-xs text-red-500 font-sans mt-1">{passwordError}</p>
               )}
 
-              {/* Password strength visualizer for registration */}
               {!isLogin && password && (
                 <div className="space-y-1.5 mt-2">
                   <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
@@ -305,17 +332,16 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
                 setPasswordError('');
                 setShowForgotSuccess(false);
               }}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors focus:outline-none"
             >
               {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
             </button>
           </div>
         </div>
 
-        {/* Security badge at footer */}
         <p className="text-center text-xxs text-slate-400 dark:text-slate-500 leading-normal">
-          By signing in, you consent to our automatic local security guidelines. <br />
-          Data transmissions are fully sandboxed and audited for standard-privacy protocols.
+          By signing in, you consent to our automatic database security guidelines. <br />
+          Data transmissions are fully sandboxed and stored using enterprise encryption standards.
         </p>
       </div>
     </div>
