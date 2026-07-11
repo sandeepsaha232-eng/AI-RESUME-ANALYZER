@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request as ExpressRequest, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -7,8 +7,9 @@ import multer from 'multer';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { GoogleGenAI } from '@google/genai';
+import { createSupabaseContext } from '@supabase/server';
 import { calculateAtsScore } from './src/scoringEngine';
-import { Resume, AnalyzerResult, JDMatchResult, SkillGap } from './src/types';
+import { Resume, AnalyzerResult, JDMatchResult } from './src/types';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,68 @@ const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Helper: Convert Express request to standard Web Request for @supabase/server
+function toWebRequest(req: ExpressRequest): Request {
+  const url = `${req.protocol}://${req.get('host') || 'localhost'}${req.originalUrl}`;
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      if (Array.isArray(value)) {
+        value.forEach(v => headers.append(key, v));
+      } else {
+        headers.set(key, value);
+      }
+    }
+  }
+  return new Request(url, {
+    method: req.method,
+    headers: headers,
+  });
+}
+
+// Optional Supabase Authentication Middleware using @supabase/server
+async function supabaseAuthMiddleware(req: ExpressRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+
+  // If no auth header or Supabase is not configured, skip verification
+  if (!authHeader || !process.env.SUPABASE_URL) {
+    return next();
+  }
+
+  try {
+    const webRequest = toWebRequest(req);
+    const { data: ctx, error } = await createSupabaseContext(webRequest, {
+      auth: 'user',
+      env: {
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
+        SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+        SUPABASE_JWKS_URL: process.env.SUPABASE_JWKS_URL,
+      }
+    });
+
+    if (error) {
+      return res.status(error.status || 401).json({
+        error: {
+          code: error.code || 'UNAUTHORIZED_TOKEN',
+          message: error.message || 'Invalid or expired Supabase token.',
+          requestId: req.headers['x-request-id'] || `req-${Date.now()}`
+        }
+      });
+    }
+
+    // Attach verified user claims and client context to request
+    (req as any).supabaseContext = ctx;
+    (req as any).user = ctx.userClaims;
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Apply authentication middleware globally to all API routes
+app.use('/api/', supabaseAuthMiddleware);
+
 // Configure Multer for file uploads (in-memory storage)
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -45,13 +108,13 @@ function cleanJsonResponse(text: string): string {
 }
 
 // Basic health check route
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: ExpressRequest, res: Response) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 // 1. POST /api/v1/analyze
 // Performs deterministic scoring and generates recommendations via Gemini API
-app.post('/api/v1/analyze', async (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/v1/analyze', async (req: ExpressRequest, res: Response, next: NextFunction) => {
   try {
     const { resume } = req.body as { resume: Resume };
     if (!resume) {
@@ -66,7 +129,6 @@ app.post('/api/v1/analyze', async (req: Request, res: Response, next: NextFuncti
 
     // B. Call Gemini to generate recommendations explaining/tailoring to the score
     if (!geminiApiKey) {
-      // Return deterministic results with some general recommendations if no API key is set
       analysisResult.recommendations = [
         {
           id: 'rec-1',
@@ -121,7 +183,6 @@ Output ONLY a valid JSON object. No markdown block, no intro, no wrap.`;
       }
     } catch (parseError) {
       console.error('Error parsing Gemini recommendations JSON:', parseError);
-      // Fallback recommendations if JSON parse fails
       analysisResult.recommendations = [
         {
           id: 'rec-f1',
@@ -148,7 +209,7 @@ Output ONLY a valid JSON object. No markdown block, no intro, no wrap.`;
 
 // 2. POST /api/v1/resumes/upload
 // Parses uploaded document, creates a structured Resume, runs ATS scoring & recommendations
-app.post('/api/v1/resumes/upload', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/v1/resumes/upload', upload.single('file'), async (req: ExpressRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       const err: any = new Error('No resume file uploaded');
@@ -374,7 +435,7 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
 
 // 3. POST /api/v1/compare
 // Performs AI-based matching and gap analysis against a job description
-app.post('/api/v1/compare', async (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/v1/compare', async (req: ExpressRequest, res: Response, next: NextFunction) => {
   try {
     const { resume, jdText } = req.body as { resume: Resume; jdText: string };
     if (!resume || !jdText) {
@@ -385,7 +446,6 @@ app.post('/api/v1/compare', async (req: Request, res: Response, next: NextFuncti
     }
 
     if (!geminiApiKey) {
-      // Return beautiful mock results if no API key is configured
       const mockResult: JDMatchResult = {
         matchPercentage: 70,
         missingKeywords: ['system design', 'kubernetes', 'graphql'],
@@ -452,7 +512,7 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
 
 // 4. POST /api/v1/improve
 // Enhances a resume bullet point using Gemini AI
-app.post('/api/v1/improve', async (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/v1/improve', async (req: ExpressRequest, res: Response, next: NextFunction) => {
   try {
     const { bullet, action, title } = req.body as { bullet: string; action: 'enhance-bullet' | 'fix-grammar'; title?: string };
     if (!bullet) {
@@ -488,7 +548,7 @@ Output ONLY the rewritten bullet point in plain text. Do not wrap in quotes. No 
 
 // 5. POST /api/v1/generate-summary
 // Generates a professional summary from a resume profile using Gemini AI
-app.post('/api/v1/generate-summary', async (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/v1/generate-summary', async (req: ExpressRequest, res: Response, next: NextFunction) => {
   try {
     const { resume } = req.body as { resume: Resume };
     if (!resume) {
@@ -533,7 +593,7 @@ interface AppError extends Error {
   code?: string;
 }
 
-app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
+app.use((err: AppError, req: ExpressRequest, res: Response, next: NextFunction) => {
   console.error('Unhandled Server Error:', err);
   const status = err.status || 500;
   const code = err.code || 'INTERNAL_SERVER_ERROR';
@@ -548,15 +608,13 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Fallback all other routes to SPA index.html in production
-app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  // If request is for an API that doesn't exist, return 404
+app.get('*', (req: ExpressRequest, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api/')) {
     const err: AppError = new Error(`API endpoint ${req.path} not found`);
     err.status = 404;
     err.code = 'ENDPOINT_NOT_FOUND';
     return next(err);
   }
-  // Otherwise serve index.html for React SPA
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) {
       res.status(404).send('Not Found');

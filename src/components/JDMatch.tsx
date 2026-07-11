@@ -72,7 +72,7 @@ export default function JDMatch({ resumes }: JDMatchProps) {
               <select
                 value={selectedResumeId}
                 onChange={(e) => setSelectedResumeId(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
               >
                 {resumes.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -95,7 +95,7 @@ export default function JDMatch({ resumes }: JDMatchProps) {
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
                 placeholder="Paste the raw text of the job description here..."
-                className="w-full p-3.5 bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none leading-relaxed"
+                className="w-full p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none leading-relaxed"
               />
             </div>
 

@@ -166,7 +166,7 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit, onAddRes
                 <select
                   value={selectedResumeId}
                   onChange={(e) => setSelectedResumeId(e.target.value)}
-                  className="flex-grow px-3 py-2.5 bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                  className="flex-grow px-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
                 >
                   {resumes.map((r) => (
                     <option key={r.id} value={r.id}>
