@@ -259,6 +259,26 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
     ? testimonials
     : testimonials.filter(t => t.category === activeTestimonialTab);
 
+  // Framer Motion staggered grid variants
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const fadeInUpVariant = {
+    hidden: { opacity: 0, y: 35 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 50, damping: 15 }
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden bg-[#05050C] text-slate-100 transition-colors duration-300 font-sans">
 
@@ -283,7 +303,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
       </header>
 
       {/* Main Container */}
-      <main className="flex-grow space-y-32 py-16 px-6 max-w-7xl mx-auto w-full relative z-10 text-center">
+      <main className="flex-grow space-y-36 py-16 px-6 max-w-7xl mx-auto w-full relative z-10 text-center">
 
         {/* SECTION 1: HERO */}
         <section className="space-y-8 max-w-3xl mx-auto">
@@ -426,11 +446,23 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           </AnimatePresence>
         </div>
 
+
+        {/* =========================================================================
+            NOTE: ALL SECTIONS BELOW HERE HAVE ENHANCED FONT SIZES, PREMIUM GLASSMORPHIC
+            BACKDROP BLURS, AND SMOOTH STAGGERED SCROLL ENTRANCE ANIMATIONS
+            ========================================================================= */}
+
         {/* SECTION 2: CORE FEATURES */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Built for Perfection</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Core Platform Features</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Built for Perfection</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Core Platform Features</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
@@ -446,31 +478,43 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
             ].map((feat, idx) => {
               const Icon = feat.icon;
               return (
-                <div key={idx} className="p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-md space-y-3 hover:border-indigo-500/30 transition-all">
-                  <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center text-cyan-400"><Icon className="w-5 h-5" /></div>
-                  <h4 className="text-sm font-bold text-white">{feat.title}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed font-light">{feat.desc}</p>
-                </div>
+                <motion.div
+                  key={idx}
+                  variants={fadeInUpVariant}
+                  className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl space-y-4 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300"
+                >
+                  <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-cyan-400">
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-base font-bold text-white">{feat.title}</h4>
+                  <p className="text-sm text-slate-300 leading-relaxed font-light">{feat.desc}</p>
+                </motion.div>
               );
             })}
           </div>
-        </section>
+        </motion.section>
 
         {/* OPTIONAL WOW: TEMPLATE GALLERY SHOWCASE */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Aesthetic layouts</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Recruiter-Approved Templates</h2>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">Explore premium grid options optimized for top applicant tracking algorithms.</p>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Aesthetic layouts</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Recruiter-Approved Templates</h2>
+            <p className="text-sm text-slate-300 max-w-md mx-auto">Explore premium grid options optimized for top applicant tracking algorithms.</p>
           </div>
 
           {/* Selector tabs */}
-          <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto bg-white/5 p-1 rounded-xl">
+          <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto bg-white/5 p-1 rounded-xl">
             {templatesList.map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTemplate(t)}
-                className={`px-3 py-1.5 rounded-lg text-xxs font-black uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase transition-all ${
                   activeTemplate === t ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -480,37 +524,46 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           </div>
 
           {/* Template Live Preview Area */}
-          <div className="max-w-xl mx-auto rounded-2xl p-0.5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-cyan-500/10 border border-white/10 shadow-xl overflow-hidden bg-slate-950/80 p-8 text-left space-y-4">
+          <motion.div
+            variants={fadeInUpVariant}
+            className="max-w-2xl mx-auto rounded-2xl bg-[#0c0c16]/70 border border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden p-8 text-left space-y-5 hover:border-cyan-500/30 transition-all duration-300"
+          >
             <div className="flex justify-between items-center border-b border-white/5 pb-3">
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-red-500" />
                 <span className="w-3 h-3 rounded-full bg-yellow-500" />
                 <span className="w-3 h-3 rounded-full bg-green-500" />
               </div>
-              <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{activeTemplate} Layout Preview</span>
+              <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">{activeTemplate} Layout Preview</span>
             </div>
 
-            <div className="space-y-4 text-[10px] font-mono text-slate-400">
-              <p className="text-xs text-white font-sans font-black">Alex Mercer • Software Engineer</p>
-              <div className="h-px bg-white/5" />
-              <p className="font-sans leading-relaxed"><strong>Professional Summary:</strong> Driven engineer with hands-on expertise building cloud-native SaaS systems using React, TypeScript, and Docker.</p>
+            <div className="space-y-4 text-xs font-mono text-slate-300">
+              <p className="text-sm text-white font-sans font-black">Alex Mercer • Software Engineer</p>
+              <div className="h-px bg-white/10" />
+              <p className="font-sans leading-relaxed text-sm"><strong>Professional Summary:</strong> Driven engineer with hands-on expertise building cloud-native SaaS systems using React, TypeScript, and Docker.</p>
               <div className="space-y-2 font-sans">
-                <p className="text-white font-bold uppercase tracking-wider text-[9px]">Technical Skills</p>
+                <p className="text-white font-bold uppercase tracking-wider text-[10px]">Technical Skills</p>
                 <div className="flex flex-wrap gap-1.5">
                   {['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'].map((sk) => (
-                    <span key={sk} className="px-2 py-0.5 bg-white/5 rounded border border-white/5 text-[8px] font-medium text-slate-300">{sk}</span>
+                    <span key={sk} className="px-2.5 py-1 bg-white/5 rounded border border-white/10 text-[9px] font-medium text-slate-200">{sk}</span>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* SECTION 4: AI CAPABILITIES */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Intelligent Engine</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">AI Capabilities</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Intelligent Engine</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">AI Capabilities</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
@@ -522,22 +575,32 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               { title: "Keyword Optimization", desc: "Embeds target skills seamlessly within summaries and experience items for high parsing rates." },
               { title: "Professional Summary Generator", desc: "Assembles compelling summary highlights from customized role inputs instantly." }
             ].map((cap, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-[#090915] border border-white/5 hover:border-indigo-500/20 transition-all">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2 text-cyan-300">{cap.title}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed font-light">{cap.desc}</p>
-              </div>
+              <motion.div
+                key={idx}
+                variants={fadeInUpVariant}
+                className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
+              >
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-2 text-cyan-300">{cap.title}</h4>
+                <p className="text-sm text-slate-300 leading-relaxed font-light">{cap.desc}</p>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 5: ATS INTELLIGENCE */}
-        <section className="p-8 md:p-12 rounded-3xl bg-[#090915] border border-cyan-500/10 text-left max-w-4xl mx-auto space-y-8 shadow-[0_0_30px_rgba(6,182,212,0.05)]">
-          <div className="space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Scan Metrics</span>
-            <h3 className="text-2xl md:text-3xl font-black text-white">ATS Intelligence Radar</h3>
+        <motion.section
+          initial={{ opacity: 0, y: 35 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-white/10 backdrop-blur-2xl text-left max-w-4xl mx-auto space-y-8 shadow-[0_8px_32px_0_rgba(6,182,212,0.05)]"
+        >
+          <div className="space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Scan Metrics</span>
+            <h3 className="text-3xl md:text-4xl font-black text-white">ATS Intelligence Radar</h3>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-slate-300 text-xs font-light">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-slate-200 text-sm font-light">
             {[
               { label: "ATS Score Rating", desc: "Deterministic compatibility assessment based on scanning standards." },
               { label: "Missing Keywords Check", desc: "Audit technical keyword density matches for targeted roles." },
@@ -546,19 +609,25 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               { label: "Grammar Check Check", desc: "Deep grammar scan preventing minor typographic rejections." },
               { label: "Section Completeness Check", desc: "Verify essential candidate contact info and coordinate structures." }
             ].map((item, idx) => (
-              <div key={idx} className="space-y-1.5 border-l border-indigo-500/30 pl-4 py-1">
-                <p className="font-bold text-white text-xs">{item.label}</p>
-                <p className="text-slate-400 leading-relaxed text-[11px]">{item.desc}</p>
+              <div key={idx} className="space-y-2 border-l-2 border-indigo-500/30 pl-4 py-1">
+                <p className="font-bold text-white text-sm">{item.label}</p>
+                <p className="text-slate-300 leading-relaxed text-xs">{item.desc}</p>
               </div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 6: JOB MATCH ANALYSIS */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Alignment Analytics</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Job Match Analysis</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Alignment Analytics</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Job Match Analysis</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-left max-w-5xl mx-auto">
@@ -569,22 +638,32 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               { title: "Experience Gap", val: "Junior level Match", desc: "Analytically maps seniority criteria with your resume milestones." },
               { title: "Suggested Improvements", val: "5 action recommendations", desc: "Actionable, step-by-step guidance to adapt phrasing." }
             ].map((gap, idx) => (
-              <div key={idx} className="p-5 rounded-xl bg-white/5 border border-white/5 flex flex-col justify-between">
+              <motion.div
+                key={idx}
+                variants={fadeInUpVariant}
+                className="p-5 rounded-xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl flex flex-col justify-between hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.05)] transition-all duration-300"
+              >
                 <div>
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{gap.title}</span>
-                  <p className="text-lg font-black text-white mt-1">{gap.val}</p>
+                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">{gap.title}</span>
+                  <p className="text-xl font-black text-white mt-1">{gap.val}</p>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-4 leading-normal font-light">{gap.desc}</p>
-              </div>
+                <p className="text-xs text-slate-300 mt-4 leading-normal font-light">{gap.desc}</p>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 7: WHY CHOOSE US */}
-        <section className="space-y-12 max-w-4xl mx-auto">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Unrivaled Excellence</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Why Choose Our Platform</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Unrivaled Excellence</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Why Choose Our Platform</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
@@ -596,20 +675,30 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               { title: "Secure Cloud Storage", desc: "Encrypted local browser persistence alongside premium sync safeguards." },
               { title: "Fast PDF Export", desc: "Export high-resolution scannable PDF documents instantly in one click." }
             ].map((choose, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-[#090915] border border-white/5 hover:border-indigo-500/20 transition-all">
+              <motion.div
+                key={idx}
+                variants={fadeInUpVariant}
+                className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
+              >
                 <Check className="w-5 h-5 text-cyan-400 mb-3" />
-                <h4 className="text-sm font-bold text-white mb-1">{choose.title}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed font-light">{choose.desc}</p>
-              </div>
+                <h4 className="text-base font-bold text-white mb-2">{choose.title}</h4>
+                <p className="text-sm text-slate-300 leading-relaxed font-light">{choose.desc}</p>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 9: TESTIMONIALS */}
-        <section className="space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">User success</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Real success stories</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">User success</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Real success stories</h2>
           </div>
 
           {/* Tab Selector */}
@@ -618,7 +707,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               <button
                 key={tab}
                 onClick={() => setActiveTestimonialTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xxs font-black uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg text-xs font-black uppercase transition-all ${
                   activeTestimonialTab === tab ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -629,53 +718,79 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
           {/* Testimonials Filtered Output */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
-            {filteredTestimonials.map((t, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-md space-y-4 hover:border-indigo-500/35 transition-all">
-                <p className="text-xs text-slate-300 italic leading-relaxed font-light">"{t.quote}"</p>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white">{t.avatar}</div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{t.name}</h4>
-                    <p className="text-[10px] text-slate-400">{t.category} at <span className="text-cyan-400 font-semibold">{t.company}</span></p>
+            <AnimatePresence mode="popLayout">
+              {filteredTestimonials.map((t, idx) => (
+                <motion.div
+                  key={t.name}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4 }}
+                  className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl space-y-4 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300"
+                >
+                  <p className="text-sm text-slate-200 italic leading-relaxed font-light">"{t.quote}"</p>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white">{t.avatar}</div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">{t.name}</h4>
+                      <p className="text-xs text-slate-300">{t.category} at <span className="text-cyan-400 font-semibold">{t.company}</span></p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
-        </section>
+        </motion.section>
 
         {/* OPTIONAL WOW: WHY RECRUITERS PREFER ATS-FRIENDLY */}
-        <section className="p-8 md:p-12 rounded-3xl bg-gradient-to-br from-indigo-950/20 to-cyan-950/20 border border-indigo-500/20 text-left max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-xl">
+        <motion.section
+          initial={{ opacity: 0, y: 35 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-indigo-500/20 backdrop-blur-2xl text-left max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center shadow-2xl"
+        >
           <div className="space-y-4">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Recruiter perspective</span>
-            <h3 className="text-2xl md:text-3xl font-black text-white">Why recruiters demand ATS-Friendly layouts</h3>
-            <p className="text-xs text-slate-300 leading-relaxed font-light">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Recruiter perspective</span>
+            <h3 className="text-3xl md:text-4xl font-black text-white">Why recruiters demand ATS-Friendly layouts</h3>
+            <p className="text-sm text-slate-200 leading-relaxed font-light">
               Recruiters read over 300 resumes per day. Over 90% of Fortune 500 companies run initial candidates through parsing engines. If your layout features multiple columns, custom graphs, or illegible fonts, you are rejected before a human even lays eyes on your profile.
             </p>
           </div>
-          <div className="p-6 bg-[#05050C]/90 rounded-2xl border border-white/5 space-y-3 font-mono text-[10px] text-slate-400">
+          <div className="p-6 bg-[#05050C]/80 rounded-2xl border border-white/10 backdrop-blur-xl space-y-3 font-mono text-xs text-slate-300">
             <p className="text-white font-bold text-xs uppercase">Scan Checklist</p>
             <ul className="space-y-2">
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-green-400" /><span>Scannable Experience bullet points</span></li>
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-green-400" /><span>Zero tables, graphs, or graphic stars</span></li>
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-green-400" /><span>Parsed contactCoordinates structure</span></li>
+              <li className="flex items-center space-x-2"><Check className="w-4 h-4 text-green-400" /><span className="text-sm">Scannable Experience bullet points</span></li>
+              <li className="flex items-center space-x-2"><Check className="w-4 h-4 text-green-400" /><span className="text-sm">Zero tables, graphs, or graphic stars</span></li>
+              <li className="flex items-center space-x-2"><Check className="w-4 h-4 text-green-400" /><span className="text-sm">Parsed contactCoordinates structure</span></li>
             </ul>
           </div>
-        </section>
+        </motion.section>
 
         {/* SECTION 10: FAQ */}
-        <section className="max-w-3xl mx-auto space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-black text-cyan-400 uppercase tracking-widest">Clarifications</span>
-            <h2 className="text-3xl md:text-4xl font-black text-white">Frequently Asked Questions</h2>
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="max-w-3xl mx-auto space-y-14"
+        >
+          <div className="text-center space-y-4">
+            <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Clarifications</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white">Frequently Asked Questions</h2>
           </div>
 
-          <div className="space-y-4 text-left">
+          <div className="space-y-3 text-left">
             {faqData.map((faq, idx) => (
-              <div key={idx} className="border-b border-white/5 pb-4">
+              <motion.div
+                key={idx}
+                variants={fadeInUpVariant}
+                className="p-4 rounded-xl bg-[#0c0c16]/30 border border-white/5 backdrop-blur-xl transition-all duration-300 hover:border-indigo-500/20 mb-3"
+              >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full flex justify-between items-center py-2.5 text-xs font-bold text-white hover:text-cyan-400 transition-colors focus:outline-none"
+                  className="w-full flex justify-between items-center py-2.5 text-sm font-bold text-white hover:text-cyan-400 transition-colors focus:outline-none"
                 >
                   <span>{faq.q}</span>
                   <span className="text-slate-400 text-lg">{openFaq === idx ? '−' : '+'}</span>
@@ -686,39 +801,45 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="text-slate-400 text-xs font-light leading-relaxed mt-2 overflow-hidden pl-1"
+                      className="text-slate-300 text-sm font-light leading-relaxed mt-2 overflow-hidden pl-1"
                     >
                       {faq.a}
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* SUPPORTED JOB ROLES SECTION */}
         <section className="space-y-6">
-          <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Perfectly catering to top industry paths</p>
+          <p className="text-sm font-black text-slate-500 uppercase tracking-wider">Perfectly catering to top industry paths</p>
           <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
             {['Software Engineer', 'Data Analyst', 'Product Manager', 'Mechanical Engineer', 'Business Analyst', 'Financial Consultant', 'Creative Director', 'Sales Executive'].map((role) => (
-              <span key={role} className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-slate-300 hover:text-white transition-colors">{role}</span>
+              <span key={role} className="px-4 py-2 rounded-full bg-white/5 border border-white/5 text-xs font-bold text-slate-200 hover:text-white hover:bg-indigo-500/10 hover:border-indigo-500/25 transition-colors cursor-default">{role}</span>
             ))}
           </div>
         </section>
 
         {/* SECTION 11: FINAL CALL TO ACTION */}
-        <section className="p-12 md:p-16 rounded-3xl bg-gradient-to-r from-indigo-950 via-purple-950 to-cyan-950 border border-indigo-500/30 text-center max-w-4xl mx-auto space-y-8 relative overflow-hidden shadow-2xl">
+        <motion.section
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="p-12 md:p-16 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-cyan-950/60 border border-indigo-500/30 backdrop-blur-2xl text-center max-w-4xl mx-auto space-y-8 relative overflow-hidden shadow-2xl"
+        >
           <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="space-y-3">
-            <h2 className="text-3xl md:text-5xl font-black text-white">Upgrade your career match today.</h2>
-            <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">Claim your luxury-grade workspace workspace, fix layout formatting errors, and maximize ATS scanning compatibility indices.</p>
+          <div className="space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black text-white">Upgrade your career match today.</h2>
+            <p className="text-sm text-slate-200 max-w-md mx-auto leading-relaxed">Claim your luxury-grade workspace workspace, fix layout formatting errors, and maximize ATS scanning compatibility indices.</p>
           </div>
-          <button onClick={onGetStarted} className="px-8 py-4 bg-white hover:bg-slate-100 text-slate-900 font-black text-xs rounded-xl shadow-xl uppercase tracking-wider inline-flex items-center space-x-2">
+          <button onClick={onGetStarted} className="px-8 py-4 bg-white hover:bg-slate-100 text-slate-900 font-black text-sm rounded-xl shadow-xl uppercase tracking-wider inline-flex items-center space-x-2">
             <span>Start Workspace Free</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-        </section>
+        </motion.section>
 
       </main>
 
