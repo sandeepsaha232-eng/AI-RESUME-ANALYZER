@@ -400,6 +400,31 @@ export default function App() {
   // Unread notification counter
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Guest Sign-in upon Instant Frictionless Resume Parse
+  const handleInstantResumeParsed = (parsed: Resume) => {
+    const guestEmail = `guest-${Math.floor(1000 + Math.random() * 9000)}@elevateresume.space`;
+    setUserEmail(guestEmail);
+    setIsOnboarded(true);
+    localStorage.setItem('elevate_user_email', guestEmail);
+    localStorage.setItem('elevate_is_onboarded', 'true');
+
+    // Add the newly parsed resume to list and focus it
+    setResumes([parsed, ...resumes]);
+    setActiveResumeId(parsed.id);
+    setCurrentView('builder');
+
+    // Create a gorgeous welcome notification
+    const welcomeNotif: AppNotification = {
+      id: `notif-instant-${Date.now()}`,
+      type: 'success',
+      title: 'Workspace Initialized! 🔮',
+      body: `Your uploaded resume "${parsed.title}" is loaded in your luxury workspace. Let's start auto-fixing!`,
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+    setNotifications(prev => [welcomeNotif, ...prev]);
+  };
+
   // Render entry views depending on Auth/Onboarding levels
   if (!userEmail) {
     if (currentView === 'auth-login' || currentView === 'auth-register') {
@@ -414,6 +439,7 @@ export default function App() {
       <MarketingLanding
         onGetStarted={() => setCurrentView('auth-register')}
         onLogin={() => setCurrentView('auth-login')}
+        onInstantResumeParsed={handleInstantResumeParsed}
         reduceMotion={settings.reduceMotion}
       />
     );
