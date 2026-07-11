@@ -21,7 +21,7 @@ try {
   __filename = fileURLToPath(import.meta.url);
   __dirname = path.dirname(__filename);
 } catch (e) {
-  __filename = typeof filename !== 'undefined' ? filename : path.join(process.cwd(), 'server.js');
+  __filename = path.join(process.cwd(), 'server.js');
   __dirname = process.cwd();
 }
 
