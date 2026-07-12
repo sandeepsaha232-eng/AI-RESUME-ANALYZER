@@ -6,7 +6,7 @@ import {
   Volume2, Flame, Shield, HelpCircle, Laptop, Settings, Eye, Users, Cpu, FileUp, ListFilter, Play, Github
 } from 'lucide-react';
 import CanvasVisualizer from './three/CanvasVisualizer';
-import AladdinBot from './three/AladdinBot';
+import AladdinBot, { globalBotTargetSetter } from './three/AladdinBot';
 import { Resume } from '../types';
 
 // Simple and highly optimized typewriter helper component
@@ -118,6 +118,16 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
   const triggerGuideAnimation = () => {
     setBotState('pointing');
     setHighlightPortal(true);
+
+    // Direct the 3D Bot to fly specifically to the Upload Zone element and cast a spell vortex
+    const dropzoneElement = document.getElementById('dropzone-element');
+    if (dropzoneElement && globalBotTargetSetter) {
+      const rect = dropzoneElement.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - window.innerWidth / 2;
+      const y = -(rect.top + rect.height / 2 - window.innerHeight / 2);
+      globalBotTargetSetter(x, y, true);
+    }
+
     setChatHistory((prev) => [
       ...prev,
       {
@@ -190,6 +200,15 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
     setUploadError('');
     setBotState('thinking');
     setAnalysisResult(null);
+
+    // Command Bot to fly to Upload zone and trigger magical processing animation vortex
+    const dropzoneElement = document.getElementById('dropzone-element');
+    if (dropzoneElement && globalBotTargetSetter) {
+      const rect = dropzoneElement.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - window.innerWidth / 2;
+      const y = -(rect.top + rect.height / 2 - window.innerHeight / 2);
+      globalBotTargetSetter(x, y, true);
+    }
 
     try {
       const formData = new FormData();
@@ -306,7 +325,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
       <main className="flex-grow space-y-36 py-16 px-6 max-w-7xl mx-auto w-full relative z-10 text-center">
 
         {/* SECTION 1: HERO */}
-        <section className="space-y-8 max-w-3xl mx-auto">
+        <section className="space-y-8 max-w-3xl mx-auto animate-fade-in">
           <div className="inline-flex items-center space-x-2 bg-indigo-950/40 text-indigo-300 px-4 py-1.5 rounded-full border border-indigo-500/30 text-[10px] font-extrabold uppercase tracking-widest animate-pulse">
             <Zap className="w-4.5 h-4.5 text-cyan-400" />
             <span>AI Resume Builder • ATS Analyzer • Job Tailoring</span>
@@ -314,7 +333,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
           <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tight">
             Elevate your career. <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400 animate-gradient">
               Outperform boring LLMs.
             </span>
           </h1>
@@ -324,12 +343,12 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4 max-w-md mx-auto">
-            <button onClick={onGetStarted} className="w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2">
+            <button onClick={onGetStarted} className="w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2 hover:scale-[1.03] transition-all">
               <span>Create Free Resume</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-            <button onClick={triggerGuideAnimation} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs rounded-xl transition-all uppercase tracking-wider flex items-center justify-center space-x-2">
-              <FileText className="w-4 h-4 text-cyan-400" />
+            <button onClick={triggerGuideAnimation} className="w-full py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs rounded-xl transition-all uppercase tracking-wider flex items-center justify-center space-x-2 hover:scale-[1.03]">
+              <FileText className="w-4 h-4 text-cyan-400 animate-bounce" />
               <span>Ask Genie to Rate</span>
             </button>
           </div>
@@ -337,26 +356,26 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
         {/* Live Statistics Block */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-4xl mx-auto">
-          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl hover:border-cyan-500/30 transition-colors">
             <p className="text-3xl font-black text-cyan-400">10K+</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Resumes Created</p>
           </div>
-          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl hover:border-pink-500/30 transition-colors">
             <p className="text-3xl font-black text-pink-400">95%</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">ATS Accuracy</p>
           </div>
-          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+          <div className="p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl hover:border-indigo-500/30 transition-colors">
             <p className="text-3xl font-black text-indigo-400">100+</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Templates Built</p>
           </div>
-          <div className="p-6 bg-[#0c0c1b] border border-cyan-500/10 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+          <div className="p-6 bg-[#0c0c1b] border border-cyan-500/10 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.1)] hover:shadow-[0_0_25px_rgba(6,182,212,0.2)] transition-shadow">
             <p className="text-3xl font-black text-yellow-400">{counter}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">AI Ratings Today</p>
           </div>
         </section>
 
         {/* SECTION FOR UPLOADING */}
-        <div className="w-full max-w-2xl mx-auto space-y-6">
+        <div id="dropzone-element" className="w-full max-w-2xl mx-auto space-y-6">
           <AnimatePresence mode="wait">
             {!analysisResult ? (
               <motion.div
@@ -390,16 +409,16 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                         <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping" />
                         <div className="w-16 h-16 border-4 border-indigo-500 border-t-cyan-400 rounded-full animate-spin" />
                       </div>
-                      <p className="text-sm font-black text-white">Genie is analyzing your scroll... No forms required!</p>
+                      <p className="text-sm font-black text-white animate-pulse">Genie is casting evaluation spells in his lamp... ✨</p>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <UploadCloud className="w-10 h-10 text-cyan-400 mx-auto" />
+                      <UploadCloud className="w-10 h-10 text-cyan-400 mx-auto animate-bounce" />
                       <div className="space-y-2">
                         <h3 className="text-xl font-bold text-white">Drop your resume scroll here</h3>
                         <p className="text-xs text-slate-400 max-w-sm mx-auto">Supports PDF, DOCX, and JPG/PNG resume formats. Drag and drop to immediately see your rating.</p>
                       </div>
-                      <label htmlFor="frictionless-file-upload" className="inline-flex items-center space-x-2 px-6 py-3 bg-white hover:bg-slate-100 text-slate-900 text-xs font-black rounded-xl cursor-pointer shadow-lg uppercase tracking-wider">
+                      <label htmlFor="frictionless-file-upload" className="inline-flex items-center space-x-2 px-6 py-3 bg-white hover:bg-slate-100 text-slate-900 text-xs font-black rounded-xl cursor-pointer shadow-lg uppercase tracking-wider hover:scale-105 transition-all">
                         <span>Select File</span>
                         <ArrowRight className="w-4 h-4" />
                       </label>
@@ -436,7 +455,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                   <div className="max-w-md mx-auto p-4 bg-white/5 border border-white/10 rounded-2xl">
                     <p className="text-xs text-slate-200 leading-relaxed font-medium">"{analysisResult.pickupLine}"</p>
                   </div>
-                  <button onClick={claimWorkspace} className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2 mx-auto">
+                  <button onClick={claimWorkspace} className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2 mx-auto hover:scale-105 transition-all">
                     <span>Claim Workspace & Fix Resume</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
@@ -484,7 +503,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                   className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl space-y-4 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300"
                 >
                   <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-cyan-400">
-                    <Icon className="w-6 h-6" />
+                    <Icon className="w-6 h-6 animate-pulse" />
                   </div>
                   <h4 className="text-base font-bold text-white">{feat.title}</h4>
                   <p className="text-sm text-slate-300 leading-relaxed font-light">{feat.desc}</p>
@@ -593,7 +612,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-white/10 backdrop-blur-2xl text-left max-w-4xl mx-auto space-y-8 shadow-[0_8px_32px_0_rgba(6,182,212,0.05)]"
+          className="p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-white/10 backdrop-blur-2xl text-left max-w-4xl mx-auto space-y-8 shadow-[0_8px_32px_0_rgba(6,182,212,0.05)] hover:border-cyan-500/20 transition-colors"
         >
           <div className="space-y-4">
             <span className="text-sm font-black text-cyan-400 uppercase tracking-widest">Scan Metrics</span>
@@ -609,7 +628,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               { label: "Grammar Check Check", desc: "Deep grammar scan preventing minor typographic rejections." },
               { label: "Section Completeness Check", desc: "Verify essential candidate contact info and coordinate structures." }
             ].map((item, idx) => (
-              <div key={idx} className="space-y-2 border-l-2 border-indigo-500/30 pl-4 py-1">
+              <div key={idx} className="space-y-2 border-l-2 border-indigo-500/30 pl-4 py-1 hover:border-cyan-500 transition-colors">
                 <p className="font-bold text-white text-sm">{item.label}</p>
                 <p className="text-slate-300 leading-relaxed text-xs">{item.desc}</p>
               </div>
@@ -680,7 +699,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                 variants={fadeInUpVariant}
                 className="p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
               >
-                <Check className="w-5 h-5 text-cyan-400 mb-3" />
+                <Check className="w-5 h-5 text-cyan-400 mb-3 animate-pulse" />
                 <h4 className="text-base font-bold text-white mb-2">{choose.title}</h4>
                 <p className="text-sm text-slate-300 leading-relaxed font-light">{choose.desc}</p>
               </motion.div>
@@ -832,7 +851,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
         >
           <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="space-y-4">
-            <h2 className="text-4xl md:text-6xl font-black text-white">Upgrade your career match today.</h2>
+            <h2 className="text-4xl md:text-6xl font-black text-white animate-pulse">Upgrade your career match today.</h2>
             <p className="text-sm text-slate-200 max-w-md mx-auto leading-relaxed">Claim your luxury-grade workspace workspace, fix layout formatting errors, and maximize ATS scanning compatibility indices.</p>
           </div>
           <button onClick={onGetStarted} className="px-8 py-4 bg-white hover:bg-slate-100 text-slate-900 font-black text-sm rounded-xl shadow-xl uppercase tracking-wider inline-flex items-center space-x-2">
@@ -950,9 +969,9 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setChatOpen(!chatOpen)}
-            className="px-4 py-2 bg-indigo-950/90 border border-indigo-500/30 text-white rounded-full text-xxs font-black shadow-lg hover:bg-indigo-900 transition-colors uppercase tracking-widest flex items-center space-x-1.5"
+            className="px-4 py-2 bg-indigo-950/90 border border-indigo-500/30 text-white rounded-full text-xxs font-black shadow-lg hover:bg-indigo-900 transition-colors uppercase tracking-widest flex items-center space-x-1.5 hover:scale-105"
           >
-            <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
+            <MessageSquare className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
             <span>{chatOpen ? 'Hide Guide' : 'Consult Genie'}</span>
           </button>
 
