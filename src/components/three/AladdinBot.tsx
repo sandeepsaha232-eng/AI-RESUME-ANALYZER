@@ -1,25 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import * as THREE from 'three';
-import { Sparkles, Zap, Lock, RefreshCw, Star } from 'lucide-react';
+import { Sparkles, Zap, Lock, RefreshCw } from 'lucide-react';
 
 interface AladdinBotProps {
   state: 'idle' | 'thinking' | 'success' | 'pointing';
 }
 
+// Global coordinate emitter so we can make the bot interact with the page elements directly (like the Upload Zone)
+export let globalBotTargetSetter: ((x: number, y: number, triggerVortex: boolean) => void) | null = null;
+
 export default function AladdinBot({ state }: AladdinBotProps) {
   const mountLocalRef = useRef<HTMLDivElement | null>(null);
   const stateRef = useRef(state);
 
-  // Energy & Premium state managed in React for the interactive UI HUD
+  // Bot states managed in React for the interactive UI HUD
   const [energy, setEnergy] = useState(100);
   const [isPremium, setIsPremium] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [ropeActive, setRopeActive] = useState(false);
 
+  // Floating coordinates to attach HUD directly above the 3D Genie
+  const [botPos, setBotPos] = useState({ x: 0, y: 0 });
+  const [bubbleText, setBubbleText] = useState('Hey there! Hover or drag me!');
+
   // Sync state prop with ref for high performance render loop access
   useEffect(() => {
     stateRef.current = state;
+    if (state === 'thinking') {
+      setBubbleText('Thinking... casting AI evaluation spell! ✨');
+    } else if (state === 'success') {
+      setBubbleText('Success! Your match rating is optimized! 🎉');
+    } else if (state === 'pointing') {
+      setBubbleText('Look over there! Drag and drop your scroll! 👉');
+    }
   }, [state]);
 
   // Handle global/full-screen canvas and UI
@@ -122,7 +136,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
   // 2. GLOBAL OVERLAY RENDERING: Highly Interactive full-screen Genie Bot
   // -------------------------------------------------------------
   useEffect(() => {
-    // Create overlay container if not exists
     let overlayDiv = document.getElementById('aladdin-global-overlay');
     if (!overlayDiv) {
       overlayDiv = document.createElement('div');
@@ -139,7 +152,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
 
     const scene = new THREE.Scene();
 
-    // Orthographic Camera mapping screen coordinates perfectly (1:1 with pixels)
     const camera = new THREE.OrthographicCamera(
       -width / 2,
       width / 2,
@@ -158,7 +170,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     renderer.domElement.style.left = '0';
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
-    renderer.domElement.style.pointerEvents = 'none'; // Only capture dragging specifically
+    renderer.domElement.style.pointerEvents = 'none';
     overlayDiv.appendChild(renderer.domElement);
 
     // LIGHTING
@@ -178,10 +190,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     // -------------------------------------------------------------
     const genieGroup = new THREE.Group();
     scene.add(genieGroup);
-
-    // Size multiplier to make the bot look powerful (approx 120px tall)
-    const scale = 1.0;
-    genieGroup.scale.set(scale, scale, scale);
 
     const genieMat = new THREE.MeshStandardMaterial({
       color: 0x0ea5e9,
@@ -250,7 +258,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     // -------------------------------------------------------------
     const jointGeo = new THREE.SphereGeometry(6, 8, 8);
     const boneGeo = new THREE.CylinderGeometry(4, 4, 25, 8);
-    boneGeo.translate(0, -12.5, 0); // Shift anchor point to top of joint for hierarchical rotation
+    boneGeo.translate(0, -12.5, 0);
 
     // LEFT ARM
     const leftShoulder = new THREE.Group();
@@ -353,26 +361,22 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     rightFoot.position.set(0, -25, 3);
     rightKnee.add(rightFoot);
 
-    // -------------------------------------------------------------
-    // PREMIUM LOCK VISUAL & LIGHTNING AURA SYSTEM
-    // -------------------------------------------------------------
+    // Premium Lock Graphic
     const premiumLockGroup = new THREE.Group();
     premiumLockGroup.position.set(0, 95, 0);
     genieGroup.add(premiumLockGroup);
 
-    // Golden Padlock Mesh
     const lockBodyGeo = new THREE.BoxGeometry(16, 12, 6);
     const lockBody = new THREE.Mesh(lockBodyGeo, goldMat);
     premiumLockGroup.add(lockBody);
 
     const lockShackleGeo = new THREE.TorusGeometry(6, 2, 8, 16, Math.PI);
-    lockShackleGeo.rotateX(0);
     const lockShackle = new THREE.Mesh(lockShackleGeo, goldMat);
     lockShackle.position.y = 6;
     premiumLockGroup.add(lockShackle);
-    premiumLockGroup.visible = false; // Displayed dynamically when out of energy
+    premiumLockGroup.visible = false;
 
-    // Lightning/Power Sparks Particles
+    // Lightning Sparks
     const sparkCount = 15;
     const sparks: THREE.Mesh[] = [];
     const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffea00, transparent: true, opacity: 0.9 });
@@ -383,9 +387,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       sparks.push(spark);
     }
 
-    // -------------------------------------------------------------
-    // HIGH-PERFORMANCE PATH TRAIL ("dot like structure")
-    // -------------------------------------------------------------
+    // High-performance Path Trail
     const trailLength = 25;
     const trailPool: THREE.Mesh[] = [];
     const trailMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true });
@@ -393,15 +395,13 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     for (let i = 0; i < trailLength; i++) {
       const trailDotGeo = new THREE.SphereGeometry(6 - (i / trailLength) * 4, 8, 8);
       const dot = new THREE.Mesh(trailDotGeo, trailMat.clone());
-      dot.position.set(9999, 9999, 0); // Hide initially
+      dot.position.set(9999, 9999, 0);
       scene.add(dot);
       trailPool.push(dot);
     }
     const trailHistory: THREE.Vector3[] = [];
 
-    // -------------------------------------------------------------
-    // INTERACTIVE ROPE SYSTEM
-    // -------------------------------------------------------------
+    // Rope Climber
     const ropeSegments = 16;
     const ropeSegmentMeshes: THREE.Mesh[] = [];
     const ropeMat = new THREE.MeshStandardMaterial({ color: 0xa855f7, roughness: 0.8 });
@@ -417,28 +417,53 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     }
 
     // -------------------------------------------------------------
-    // MOTION PHYSICS, DRAGGING & EDGE NAVIGATION
+    // MAGICAL VORTEX INTEGRATION (When interacting with Upload zone)
     // -------------------------------------------------------------
-    // Current Bot coords in full viewport space
-    // bottom edge matches -height/2, left matches -width/2 etc.
+    const vortexGeo = new THREE.RingGeometry(35, 45, 32);
+    const vortexMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0,
+    });
+    const vortexMesh = new THREE.Mesh(vortexGeo, vortexMat);
+    scene.add(vortexMesh);
+
+    // Coordinate States & Target Overrides
     let botX = 0;
     let botY = 0;
     let targetX = 0;
     let targetY = 0;
 
+    let overrideActive = false;
+    let vortexActive = false;
+
+    // Attach dynamic target setter to global emitter so other page components can call it
+    globalBotTargetSetter = (x: number, y: number, triggerVortex: boolean) => {
+      targetX = x;
+      targetY = y;
+      overrideActive = true;
+      vortexActive = triggerVortex;
+
+      if (triggerVortex) {
+        setBubbleText('SUMMONING THE COSMIC RATING VORTEX! 🔮✨');
+      }
+    };
+
     let isDragging = false;
     let draggingEnergyTimer = 0;
 
-    // Movement state: 'idle' | 'running' | 'climbing_wall' | 'climbing_rope' | 'tired'
     let movementMode: 'idle' | 'running' | 'climbing_wall' | 'climbing_rope' | 'tired' = 'idle';
 
-    let runDirection = 1; // 1 = right, -1 = left
-    let climbDirection = 1; // 1 = up, -1 = down
+    let runDirection = 1;
+    let climbDirection = 1;
     let climbRopeY = -height / 2;
 
-    // Listen to global mouse drag events
     const handleGlobalMouseDown = (e: MouseEvent) => {
-      // Check distance of mouse click to the Bot's screen position
+      // Deactivate target overrides when user clicks/interacts
+      overrideActive = false;
+      vortexActive = false;
+
       const clientX = e.clientX - window.innerWidth / 2;
       const clientY = -(e.clientY - window.innerHeight / 2);
 
@@ -446,8 +471,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       const dy = clientY - botY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Hitbox radius of 100px around Bot
-      if (distance < 100) {
+      if (distance < 120) {
         isDragging = true;
         movementMode = 'running';
         renderer.domElement.style.cursor = 'grabbing';
@@ -472,13 +496,9 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     window.addEventListener('mousemove', handleGlobalMouseMove);
     window.addEventListener('mouseup', handleGlobalMouseUp);
 
-    // Pre-allocated math variables to completely eliminate GC stalls
     const tempVec = new THREE.Vector3();
     const clock = new THREE.Clock();
 
-    // -------------------------------------------------------------
-    // MAIN RENDER LOOP WITH REAL-TIME PHYSICS
-    // -------------------------------------------------------------
     let animFrame: number;
     let lastTime = 0;
 
@@ -488,12 +508,11 @@ export default function AladdinBot({ state }: AladdinBotProps) {
 
       const elapsed = clock.getElapsedTime();
 
-      // Read current real-time energy & premium stats from react state variables indirectly
-      // utilizing closure states
+      // Read state parameters securely
       let currentEnergy = 100;
-      setEnergy((currentVal) => {
-        currentEnergy = currentVal;
-        return currentVal;
+      setEnergy((val) => {
+        currentEnergy = val;
+        return val;
       });
 
       let premiumActive = false;
@@ -508,19 +527,18 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         return val;
       });
 
-      // Update interactive eye color & eyebrow tilt dynamically
       const targetEyeColor = premiumActive ? new THREE.Color(0xffea00) : new THREE.Color(0x00f0ff);
       eyeMat.color.lerp(targetEyeColor, 0.15);
 
-      // Energy draining logic
       const isMovingFast = isDragging || movementMode !== 'idle';
       if (isMovingFast && !premiumActive && currentEnergy > 0) {
         draggingEnergyTimer += dt;
-        if (draggingEnergyTimer >= 0.15) { // Drain energy steadily
+        if (draggingEnergyTimer >= 0.15) {
           setEnergy((val) => {
             const nextVal = Math.max(0, val - 1.5);
             if (nextVal === 0) {
               movementMode = 'tired';
+              setBubbleText("ENERGY DRAINED! Upgrade or Recharge to move! ⚡🔒");
             }
             return nextVal;
           });
@@ -528,7 +546,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         }
       }
 
-      // Check for tired/no-energy lock visualizer
       if (currentEnergy <= 0 && !premiumActive) {
         premiumLockGroup.visible = true;
         movementMode = 'tired';
@@ -536,16 +553,27 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         premiumLockGroup.visible = false;
       }
 
-      // -------------------------------------------------------------
-      // STATE MACHINE MECHANICS (Dragging, Rope, Climbing, Running, Tired)
-      // -------------------------------------------------------------
+      // Update the React positions so the floating bubble tracks perfectly
+      setBotPos({
+        x: botX + window.innerWidth / 2,
+        y: -(botY - window.innerHeight / 2) - 150, // Floating exactly above his head
+      });
+
+      // Magical Vortex Rotation Animation
+      if (vortexActive) {
+        vortexMat.opacity = THREE.MathUtils.lerp(vortexMat.opacity, 0.85, 0.1);
+        vortexMesh.position.set(botX, botY, -1);
+        vortexMesh.rotation.z += 0.08;
+      } else {
+        vortexMat.opacity = THREE.MathUtils.lerp(vortexMat.opacity, 0, 0.1);
+      }
+
+      // State Mechanics
       if (movementMode === 'tired') {
-        // Tired state: slowly sink to the ground and contract/hunch body
         targetY = -window.innerHeight / 2 + 75;
         botX += (targetX - botX) * 0.05;
         botY += (targetY - botY) * 0.05;
 
-        // Limbs hanging tiredly
         leftShoulder.rotation.z = THREE.MathUtils.lerp(leftShoulder.rotation.z, -0.2, 0.1);
         rightShoulder.rotation.z = THREE.MathUtils.lerp(rightShoulder.rotation.z, 0.2, 0.1);
         leftElbow.rotation.z = THREE.MathUtils.lerp(leftElbow.rotation.z, -0.4, 0.1);
@@ -553,20 +581,29 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         leftHip.rotation.z = THREE.MathUtils.lerp(leftHip.rotation.z, -0.1, 0.1);
         rightHip.rotation.z = THREE.MathUtils.lerp(rightHip.rotation.z, 0.1, 0.1);
 
-        headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, 0.4, 0.1); // Drooped head
-        mouth.scale.set(1.5, 1.2, 0.6); // Gasping mouth
+        headGroup.rotation.x = THREE.MathUtils.lerp(headGroup.rotation.x, 0.4, 0.1);
+        mouth.scale.set(1.5, 1.2, 0.6);
 
-        // Lock breathing animation
         premiumLockGroup.rotation.y = elapsed * 1.5;
         premiumLockGroup.position.y = 95 + Math.sin(elapsed * 4) * 6;
       }
+      else if (overrideActive) {
+        // Direct flight command from Homepage triggers
+        botX += (targetX - botX) * 0.15;
+        botY += (targetY - botY) * 0.15;
+
+        const flySpeed = 14;
+        leftShoulder.rotation.z = Math.sin(elapsed * flySpeed) * 1.1;
+        rightShoulder.rotation.z = -Math.cos(elapsed * flySpeed) * 1.1;
+        leftHip.rotation.z = Math.cos(elapsed * flySpeed) * 0.7;
+        rightHip.rotation.z = -Math.sin(elapsed * flySpeed) * 0.7;
+      }
       else if (isDragging) {
-        // High-speed smooth dragging
-        const dragLerpFactor = premiumActive ? 0.35 : 0.22; // Extreme responsive speed
+        setBubbleText("WEEEEE! Dragging is fun! ✨🚀");
+        const dragLerpFactor = premiumActive ? 0.35 : 0.22;
         botX += (targetX - botX) * dragLerpFactor;
         botY += (targetY - botY) * dragLerpFactor;
 
-        // Limb flailing animations when flying/dragged
         const flailSpeed = premiumActive ? 25 : 16;
         leftShoulder.rotation.z = Math.sin(elapsed * flailSpeed) * 1.2;
         rightShoulder.rotation.z = Math.cos(elapsed * flailSpeed) * 1.2;
@@ -576,101 +613,81 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         leftHip.rotation.z = Math.cos(elapsed * flailSpeed) * 0.9;
         rightHip.rotation.z = Math.sin(elapsed * flailSpeed) * 0.9;
 
-        // Head looking back/gasping
         headGroup.rotation.x = -0.3;
         mouth.scale.set(1.2, 1.2, 0.6);
       }
       else if (ropeThrowing) {
-        // ROPE CLIMB SCENARIO
         movementMode = 'climbing_rope';
-
-        // Target is the rope vertical line down center of screen (x=0)
+        setBubbleText("CLIMBING FOR GLORY! 🪢🏆");
         targetX = 0;
 
-        // Show the rope hanging down smoothly
         for (let i = 0; i < ropeSegments; i++) {
           const seg = ropeSegmentMeshes[i];
           const ropeY = (window.innerHeight / 2) - (i * 45);
           seg.position.set(0, ropeY, -10);
         }
 
-        // Phase 1: Run to bottom-center of rope
         if (Math.abs(botX - targetX) > 15 && climbRopeY <= -window.innerHeight / 2) {
           botX += (targetX - botX) * 0.15;
-          botY = -window.innerHeight / 2 + 75; // Stay on floor
+          botY = -window.innerHeight / 2 + 75;
 
-          // Standard fast running animation
           const runCycle = elapsed * 16;
           leftShoulder.rotation.z = Math.sin(runCycle) * 1.3;
           rightShoulder.rotation.z = -Math.sin(runCycle) * 1.3;
           leftHip.rotation.z = -Math.sin(runCycle) * 1.1;
           rightHip.rotation.z = Math.sin(runCycle) * 1.1;
-          leftKnee.rotation.z = Math.abs(Math.sin(runCycle)) * 1.2;
-          rightKnee.rotation.z = Math.abs(Math.cos(runCycle)) * 1.2;
         } else {
-          // Phase 2: Grab rope and climb up
           if (climbRopeY <= -window.innerHeight / 2) {
             climbRopeY = botY;
           }
 
-          climbRopeY += premiumActive ? 4.5 : 2.5; // Rapid vertical rope scaling
+          climbRopeY += premiumActive ? 4.5 : 2.5;
           botX = 0;
           botY = climbRopeY;
 
           if (botY >= window.innerHeight / 2 - 100) {
-            // Reached the top! Reset rope state
             setRopeActive(false);
             climbRopeY = -window.innerHeight / 2;
           }
 
-          // Rigged climbing cycle (Hand-over-hand pulling legs up)
           const climbCycle = elapsed * 12;
           leftShoulder.rotation.z = Math.sin(climbCycle) * 1.4;
           rightShoulder.rotation.z = -Math.sin(climbCycle) * 1.4;
           leftElbow.rotation.z = -Math.abs(Math.cos(climbCycle)) * 1.2;
           rightElbow.rotation.z = -Math.abs(Math.sin(climbCycle)) * 1.2;
-
-          leftHip.rotation.z = Math.cos(climbCycle) * 0.5;
-          rightHip.rotation.z = -Math.cos(climbCycle) * 0.5;
         }
       }
       else {
-        // HIDE ROPE IF NOT IN USE
         for (let i = 0; i < ropeSegments; i++) {
           ropeSegmentMeshes[i].position.y = 9999;
         }
 
-        // SCREEN BORDERS EDGE DETECT RUNNING & CLIMBING PHYSICS
         const screenMarginBottom = -window.innerHeight / 2 + 75;
         const screenMarginLeft = -window.innerWidth / 2 + 40;
         const screenMarginRight = window.innerWidth / 2 - 40;
         const screenMarginTop = window.innerHeight / 2 - 80;
 
         if (movementMode === 'climbing_wall') {
-          // Scale wall upwards on the edge
+          setBubbleText("Scaling the screen boundaries! 🧗‍♂️");
           botY += climbDirection * (premiumActive ? 6 : 3.5);
           botX = runDirection === 1 ? screenMarginRight : screenMarginLeft;
 
           if (botY >= screenMarginTop) {
-            climbDirection = -1; // reverse and climb back down
+            climbDirection = -1;
           } else if (botY <= screenMarginBottom) {
             climbDirection = 1;
-            movementMode = 'running'; // Return to floor running
+            movementMode = 'running';
           }
 
-          // Climbing limb cycles
           const climbCycle = elapsed * 10;
           leftShoulder.rotation.z = Math.sin(climbCycle) * 1.2;
           rightShoulder.rotation.z = -Math.sin(climbCycle) * 1.2;
-          leftHip.rotation.z = -Math.sin(climbCycle) * 0.8;
-          rightHip.rotation.z = Math.sin(climbCycle) * 0.8;
         } else {
-          // Standard floor edge runner
           movementMode = 'running';
+          setBubbleText("Patrolling the edges of your dashboard! 🚀");
           botY = screenMarginBottom;
           botX += runDirection * (premiumActive ? 8 : 4.5);
 
-          // Change directions at screen edges & trigger vertical climb challenge occasionally
           if (botX >= screenMarginRight) {
             botX = screenMarginRight;
             runDirection = -1;
@@ -687,37 +704,29 @@ export default function AladdinBot({ state }: AladdinBotProps) {
             }
           }
 
-          // Walking / Running high energy cyclic gait
           const runCycle = elapsed * (premiumActive ? 18 : 11);
           leftShoulder.rotation.z = Math.sin(runCycle) * 1.2;
           rightShoulder.rotation.z = -Math.sin(runCycle) * 1.2;
           leftHip.rotation.z = -Math.sin(runCycle) * 1.0;
           rightHip.rotation.z = Math.sin(runCycle) * 1.0;
-          leftKnee.rotation.z = Math.abs(Math.sin(runCycle)) * 1.0;
-          rightKnee.rotation.z = Math.abs(Math.cos(runCycle)) * 1.0;
         }
 
-        // Head bobbing & face normal expression
         headGroup.rotation.x = 0;
         mouth.scale.set(1.0, 0.3, 0.6);
       }
 
-      // Update actual position in 3D scene
       genieGroup.position.set(botX, botY, 0);
 
-      // Make the bot turn smoothly towards its movement target
       if (isDragging) {
         const turnAngle = (targetX - botX) * 0.005;
         genieGroup.rotation.y = THREE.MathUtils.clamp(turnAngle, -Math.PI / 4, Math.PI / 4);
-      } else if (movementMode === 'climbing_wall' || movementMode === 'climbing_rope') {
+      } else if (movementMode === 'climbing_wall' || movementMode === 'climbing_rope' || overrideActive) {
         genieGroup.rotation.y = 0;
       } else {
-        genieGroup.rotation.y = runDirection === 1 ? 0 : Math.PI; // Face running direction
+        genieGroup.rotation.y = runDirection === 1 ? 0 : Math.PI;
       }
 
-      // -------------------------------------------------------------
-      // PATH TRAIL DOT PHYSICS (Render neon dot trail)
-      // -------------------------------------------------------------
+      // Trail Dots
       tempVec.set(botX, botY - 15, -2);
       trailHistory.unshift(tempVec.clone());
       if (trailHistory.length > trailLength) {
@@ -729,7 +738,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         if (i < trailHistory.length) {
           dot.position.copy(trailHistory[i]);
 
-          // Custom beautiful colors: Premium gets sparkling neon yellow-gold, normal gets cyan-purple
           const dotColor = premiumActive
             ? new THREE.Color().setHSL(0.12, 1.0, 0.5)
             : new THREE.Color().setHSL(0.55 + (i / trailLength) * 0.2, 1.0, 0.5);
@@ -742,9 +750,7 @@ export default function AladdinBot({ state }: AladdinBotProps) {
         }
       }
 
-      // -------------------------------------------------------------
-      // LIGHTNING PREMIUM AURA ROTATION
-      // -------------------------------------------------------------
+      // Sparks
       if (premiumActive) {
         sparks.forEach((spark, index) => {
           const theta = elapsed * 5 + (index / sparkCount) * Math.PI * 2;
@@ -767,7 +773,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
 
     animFrame = requestAnimationFrame(animate);
 
-    // Dynamic viewport resize updating Orthographic camera mapping
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -804,6 +809,8 @@ export default function AladdinBot({ state }: AladdinBotProps) {
       goldMat.dispose();
       trailMat.dispose();
       ropeMat.dispose();
+      vortexGeo.dispose();
+      vortexMat.dispose();
       trailPool.forEach(dot => {
         dot.geometry.dispose();
         (dot.material as THREE.Material).dispose();
@@ -814,7 +821,6 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     };
   }, []);
 
-  // Handler functions for the custom Premium HUD controls
   const handleThrowRope = () => {
     if (energy <= 0 && !isPremium) {
       setShowPremiumModal(true);
@@ -827,77 +833,94 @@ export default function AladdinBot({ state }: AladdinBotProps) {
     setIsPremium(true);
     setEnergy(100);
     setShowPremiumModal(false);
+    setBubbleText("SUPREME POWER MODE ACTIVATED! ⚡👑");
   };
 
   const castRechargeSpell = () => {
     setEnergy(100);
     setShowPremiumModal(false);
+    setBubbleText("COSMIC RECHARGE CAST SUCCESSFULLY! 🔮");
   };
 
   return (
     <>
-      {/* 1. Local container rendering the 3D spinning lamp (fits exactly inside bottom circular launcher) */}
       <div className="w-full h-full flex items-center justify-center relative">
         <div ref={mountLocalRef} className="w-20 h-20 select-none cursor-pointer" />
       </div>
 
-      {/* 2. Global overlay UI element rendered inside a React Portal to the body root */}
       {ReactDOM.createPortal(
-        <div className="fixed top-6 left-6 z-[10000] pointer-events-auto flex flex-col space-y-4">
-          {/* Energy and Controls panel */}
-          <div className="p-4 rounded-2xl bg-black/75 border border-indigo-500/20 backdrop-blur-xl shadow-2xl flex flex-col space-y-3.5 w-64">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 flex items-center gap-1.5">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span>Genie Bot Energy</span>
-              </span>
-              <span className="text-xs font-bold text-white">{Math.round(energy)}%</span>
+        <div className="fixed inset-0 z-[10000] pointer-events-none">
+          {/* Dynamic Floating HUD: Attached directly above the Bot's head */}
+          <div
+            className="absolute z-[10000] pointer-events-auto flex flex-col items-center space-y-2 transition-all duration-75 select-none"
+            style={{
+              left: `${botPos.x}px`,
+              top: `${botPos.y}px`,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            {/* Elegant glassmorphic Speech Bubble */}
+            <div className="px-3 py-2 rounded-2xl bg-black/90 border border-cyan-500/20 backdrop-blur-md shadow-lg max-w-[220px] text-center text-[10px] font-bold text-slate-100 flex items-center gap-1.5 animate-bounce">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>{bubbleText}</span>
             </div>
 
-            {/* Glowing Energy Bar */}
-            <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5 relative">
-              <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  isPremium
-                    ? 'bg-gradient-to-r from-yellow-400 via-pink-500 to-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.5)]'
-                    : energy > 30
-                    ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                    : 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]'
-                }`}
-                style={{ width: `${energy}%` }}
-              />
-            </div>
+            {/* Direct Bot HUD containing Energy + Action triggers */}
+            <div className="p-3 rounded-2xl bg-black/90 border border-indigo-500/30 backdrop-blur-xl shadow-2xl flex flex-col space-y-2 w-48">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-black uppercase tracking-widest text-cyan-400 flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 text-yellow-400" />
+                  <span>Energy</span>
+                </span>
+                <span className="text-[10px] font-bold text-white">{Math.round(energy)}%</span>
+              </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={handleThrowRope}
-                disabled={ropeActive}
-                className={`flex-grow py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
-                  ropeActive
-                    ? 'bg-slate-800 text-slate-500 border-transparent'
-                    : 'bg-indigo-600/20 hover:bg-indigo-600/40 border-indigo-500/40 text-indigo-300 active:scale-95'
-                }`}
-              >
-                {ropeActive ? '🪢 Climbing...' : '🪢 Throw Rope'}
-              </button>
+              {/* Mini Energy bar */}
+              <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5 relative">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    isPremium
+                      ? 'bg-gradient-to-r from-yellow-400 via-pink-500 to-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.5)]'
+                      : energy > 30
+                      ? 'bg-gradient-to-r from-indigo-500 to-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                      : 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                  }`}
+                  style={{ width: `${energy}%` }}
+                />
+              </div>
 
-              <button
-                onClick={() => setShowPremiumModal(true)}
-                className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all flex items-center gap-1 border ${
-                  isPremium
-                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
-                    : 'bg-yellow-600 hover:bg-yellow-500 text-black border-transparent active:scale-95'
-                }`}
-              >
-                {isPremium ? <Sparkles className="w-3.5 h-3.5 text-yellow-400" /> : <Lock className="w-3.5 h-3.5 text-black" />}
-                <span>{isPremium ? 'PRO' : 'Upgrade'}</span>
-              </button>
+              {/* Trigger Buttons */}
+              <div className="flex gap-1.5 pt-1">
+                <button
+                  onClick={handleThrowRope}
+                  disabled={ropeActive}
+                  className={`flex-grow py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all border ${
+                    ropeActive
+                      ? 'bg-slate-800/40 text-slate-500 border-transparent'
+                      : 'bg-indigo-600/20 hover:bg-indigo-600/40 border-indigo-500/40 text-indigo-300 active:scale-95'
+                  }`}
+                >
+                  {ropeActive ? '🪢 Clb...' : '🪢 Rope'}
+                </button>
+
+                <button
+                  onClick={() => setShowPremiumModal(true)}
+                  className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all flex items-center gap-1 border ${
+                    isPremium
+                      ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                      : 'bg-yellow-600 hover:bg-yellow-500 text-black border-transparent active:scale-95'
+                  }`}
+                >
+                  {isPremium ? <Sparkles className="w-3 h-3 text-yellow-400" /> : <Lock className="w-3 h-3 text-black" />}
+                  <span>{isPremium ? 'PRO' : 'PRO'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Premium Power Modal pop-up window */}
           {showPremiumModal && (
-            <div className="fixed inset-0 z-[10001] bg-black/60 backdrop-blur-md flex items-center justify-center p-6">
+            <div className="fixed inset-0 z-[10001] bg-black/60 backdrop-blur-md flex items-center justify-center p-6 pointer-events-auto">
               <div className="w-full max-w-md rounded-3xl p-0.5 bg-gradient-to-r from-yellow-400 via-pink-500 to-cyan-400 shadow-[0_0_50px_rgba(99,102,241,0.2)]">
                 <div className="bg-[#090912] rounded-[22px] p-8 text-center space-y-6">
                   <div className="w-16 h-16 bg-gradient-to-tr from-yellow-400 to-pink-500 rounded-full flex items-center justify-center text-black mx-auto shadow-xl">

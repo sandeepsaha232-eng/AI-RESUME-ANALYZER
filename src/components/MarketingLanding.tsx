@@ -6,7 +6,7 @@ import {
   Volume2, Flame, Shield, HelpCircle, Laptop, Settings, Eye, Users, Cpu, FileUp, ListFilter, Play, Github
 } from 'lucide-react';
 import CanvasVisualizer from './three/CanvasVisualizer';
-import AladdinBot from './three/AladdinBot';
+import AladdinBot, { globalBotTargetSetter } from './three/AladdinBot';
 import { Resume } from '../types';
 
 // Simple and highly optimized typewriter helper component
@@ -192,6 +192,15 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
     setBotState('thinking');
     setAnalysisResult(null);
 
+    // Command Bot to fly to Upload zone and trigger magical processing animation vortex
+    const dropzoneElement = document.getElementById('dropzone-element');
+    if (dropzoneElement && globalBotTargetSetter) {
+      const rect = dropzoneElement.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - window.innerWidth / 2;
+      const y = -(rect.top + rect.height / 2 - window.innerHeight / 2);
+      globalBotTargetSetter(x, y, true);
+    }
+
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -316,7 +325,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
           <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tight">
             Elevate your career. <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400 animate-gradient">
               Outperform boring LLMs.
             </span>
           </h1>
@@ -358,7 +367,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
         </section>
 
         {/* SECTION FOR UPLOADING */}
-        <div className="w-full max-w-2xl mx-auto space-y-6">
+        <div id="dropzone-element" className="w-full max-w-2xl mx-auto space-y-6">
           <AnimatePresence mode="wait">
             {!analysisResult ? (
               <motion.div
