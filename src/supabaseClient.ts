@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 
 let supabaseInstance: any;
 
@@ -26,7 +26,7 @@ if (supabaseUrl && supabaseUrl.startsWith('https://') && supabaseServiceKey && s
 
 function createFallbackProxy() {
   console.warn(
-    'WARNING: Running in offline mock mode because SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY are invalid or missing.'
+    'WARNING: Running in offline mock mode because SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) are invalid or missing.'
   );
   return new Proxy({} as any, {
     get(target, prop) {

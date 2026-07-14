@@ -37,7 +37,7 @@ import { supabase } from './src/supabaseClient';
 // Basic health check route with dynamic Supabase connectivity check
 app.get('/api/health', async (req: Request, res: Response) => {
   const supabaseUrl = process.env.SUPABASE_URL || '';
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 
   let supabaseConfigured = false;
   let supabaseConnectionError: string | null = null;
