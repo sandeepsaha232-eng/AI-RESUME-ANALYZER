@@ -8,6 +8,7 @@ import {
 import CanvasVisualizer from './three/CanvasVisualizer';
 import AladdinBot, { globalBotTargetSetter } from './three/AladdinBot';
 import { Resume } from '../types';
+import { safeFetchJson } from '../utils/apiHelper';
 
 // Simple and highly optimized typewriter helper component
 function TypewriterText({ text, speed = 20 }: { text: string; speed?: number }) {
@@ -205,15 +206,10 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/v1/resumes/upload', {
+      const json = await safeFetchJson('/api/v1/resumes/upload', {
         method: 'POST',
         body: formData,
       });
-
-      const json = await response.json();
-      if (!response.ok || json.error) {
-        throw new Error(json.error?.message || 'Genie magic hiccuped while parsing.');
-      }
 
       const { resume, analysis } = json.data;
       const score = analysis.atsScore;

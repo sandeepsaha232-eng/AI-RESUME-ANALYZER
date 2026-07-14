@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Eye, EyeOff, Lock, Mail, Sparkles, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { safeFetchJson } from '../utils/apiHelper';
 
 interface AuthProps {
   onSuccess: (email: string, token: string) => void;
@@ -85,19 +86,13 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
         body.fullName = fullName;
       }
 
-      const response = await fetch(endpoint, {
+      const result = await safeFetchJson(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error?.message || 'Authentication failed');
-      }
 
       const sessionToken = result.data?.session?.access_token;
       const verifiedEmail = result.data?.user?.email || email;
