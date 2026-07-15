@@ -6,6 +6,7 @@ export interface PersonalInfo {
   website: string;
   linkedin: string;
   github: string;
+  photoUrl?: string;
 }
 
 export interface Experience {

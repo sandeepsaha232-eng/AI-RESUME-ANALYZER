@@ -21,10 +21,22 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
       });
     }
 
+    const origin = req.get('origin') || req.get('referer');
+    let redirectUrl = 'https://ai-resume-analyzer-sepia-ten.vercel.app';
+    if (origin) {
+      try {
+        const parsed = new URL(origin);
+        redirectUrl = parsed.origin;
+      } catch (e) {
+        // fallback to default
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName || splitEmailName(email)
         }

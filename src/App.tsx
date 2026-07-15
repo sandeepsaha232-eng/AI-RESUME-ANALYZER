@@ -3,6 +3,7 @@ import { Award, Bell, Briefcase, FileText, Laptop, LayoutDashboard, LogOut, Menu
 import { Resume, AppNotification, UserSettings } from './types';
 import { mockResumes } from './data/mockResumes';
 import { safeFetchJson } from './utils/apiHelper';
+import { calculateAtsScore } from './scoringEngine';
 
 // Component imports
 import MarketingLanding from './components/MarketingLanding';
@@ -15,6 +16,7 @@ import JDMatch from './components/JDMatch';
 import Settings from './components/Settings';
 import NotificationCenter from './components/NotificationCenter';
 import ExportView from './components/ExportView';
+import CoverLetterGenerator from './components/CoverLetterGenerator';
 
 export default function App() {
   // 1. Session States
@@ -142,15 +144,43 @@ export default function App() {
 
   // Sync state mutations to localStorage
   useEffect(() => {
-    localStorage.setItem('elevate_resumes', JSON.stringify(resumes));
+    try {
+      localStorage.setItem('elevate_resumes', JSON.stringify(resumes));
+    } catch (e: any) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        console.warn('LocalStorage quota exceeded. Stripping heavy base64 profile pictures to save space...');
+        const stripped = resumes.map(r => ({
+          ...r,
+          personalInfo: {
+            ...r.personalInfo,
+            photoUrl: r.personalInfo.photoUrl && r.personalInfo.photoUrl.length > 2000 ? '[Stripped Base64 Photo to Prevent Storage Quota Crash]' : r.personalInfo.photoUrl
+          }
+        }));
+        try {
+          localStorage.setItem('elevate_resumes', JSON.stringify(stripped));
+        } catch (innerErr) {
+          console.error('Failed to save resumes even after stripping photos:', innerErr);
+        }
+      } else {
+        console.error('Failed to save resumes to localStorage:', e);
+      }
+    }
   }, [resumes]);
 
   useEffect(() => {
-    localStorage.setItem('elevate_notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('elevate_notifications', JSON.stringify(notifications));
+    } catch (e) {
+      console.error('Failed to save notifications to localStorage:', e);
+    }
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem('elevate_settings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('elevate_settings', JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save settings to localStorage:', e);
+    }
   }, [settings]);
 
   // Apply dark mode theme on initial paint
@@ -195,16 +225,96 @@ export default function App() {
     setCurrentView('dashboard');
   };
 
+  const handleOnboardingWithParsedResume = async (parsedResume: Resume) => {
+    setIsOnboarded(true);
+    localStorage.setItem('elevate_is_onboarded', 'true');
+
+    if (token) {
+      try {
+        const result = await safeFetchJson('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: parsedResume })
+        });
+        if (result.data) {
+          setResumes([result.data, ...resumes]);
+          setActiveResumeId(result.data.id);
+          setCurrentView('dashboard');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to save parsed onboarding resume:', err);
+      }
+    }
+
+    setResumes([parsedResume, ...resumes]);
+    setActiveResumeId(parsedResume.id);
+    setCurrentView('dashboard');
+  };
+
   // Onboarding Completed
   const handleOnboardingComplete = async (data: {
     targetTitle: string;
     experienceLevel: string;
     skills: string[];
+    photoUrl?: string;
+    phone?: string;
+    location?: string;
+    education?: {
+      institution: string;
+      degree: string;
+      fieldOfStudy: string;
+      gpa: string;
+      honors: string;
+    };
+    projects?: {
+      name: string;
+      role: string;
+      bullets: string[];
+    };
+    certifications?: {
+      name: string;
+      issuer: string;
+    };
   }) => {
     setIsOnboarded(true);
     localStorage.setItem('elevate_is_onboarded', 'true');
 
-    // Create initial custom template resume for the onboarded target role
+    // Build seeded lists from onboarding queries
+    const educationList = data.education ? [{
+      id: `edu-${Date.now()}`,
+      institution: data.education.institution,
+      degree: data.education.degree,
+      fieldOfStudy: data.education.fieldOfStudy,
+      location: data.location || '',
+      startDate: new Date().getFullYear().toString(),
+      endDate: new Date().getFullYear().toString(),
+      current: true,
+      gpa: data.education.gpa
+    }] : [];
+
+    const projectsList = data.projects ? [{
+      id: `proj-${Date.now()}`,
+      name: data.projects.name,
+      role: data.projects.role,
+      url: '',
+      startDate: new Date().getFullYear().toString(),
+      endDate: new Date().getFullYear().toString(),
+      bullets: data.projects.bullets
+    }] : [];
+
+    const certificationsList = data.certifications ? [{
+      id: `cert-${Date.now()}`,
+      name: data.certifications.name,
+      issuer: data.certifications.issuer,
+      date: new Date().getFullYear().toString(),
+      url: ''
+    }] : [];
+
+    // Create initial custom template resume with all the queried details
     const newResume: Resume = {
       id: `res-${Date.now()}`,
       title: `${data.targetTitle} Template`,
@@ -213,20 +323,25 @@ export default function App() {
       personalInfo: {
         fullName: userEmail ? userEmail.split('@')[0] : 'Professional Candidate',
         email: userEmail || 'candidate@example.com',
-        phone: '',
-        location: '',
+        phone: data.phone || '',
+        location: data.location || '',
         website: '',
         linkedin: '',
-        github: ''
+        github: '',
+        photoUrl: data.photoUrl
       },
-      summary: `Motivated and goal-driven professional targeting a career advancement as a ${data.targetTitle}. Dedicated to utilizing solid competencies in ${data.skills.slice(0, 3).join(', ')} to coordinate operations and deliver valuable engineering milestones.`,
+      summary: `Motivated and goal-driven professional targeting a career advancement as a ${data.targetTitle}. Dedicated to utilizing solid competencies in ${data.skills.slice(0, 3).join(', ')} to coordinate operations and deliver valuable engineering milestones.${data.education?.honors ? ` Proud recipient of ${data.education.honors}.` : ''}`,
       experience: [],
-      education: [],
-      projects: [],
+      education: educationList,
+      projects: projectsList,
       skills: data.skills,
-      certifications: [],
+      certifications: certificationsList,
       languages: []
     };
+
+    // Calculate initial ATS score
+    const initialAnalysis = calculateAtsScore(newResume);
+    newResume.atsScore = initialAnalysis.atsScore;
 
     // Save profile attributes to DB
     if (token) {
@@ -255,7 +370,7 @@ export default function App() {
         if (result.data) {
           setResumes([result.data, ...resumes]);
           setActiveResumeId(result.data.id);
-          setCurrentView('builder');
+          setCurrentView('dashboard');
           return;
         }
       } catch (err) {
@@ -265,7 +380,7 @@ export default function App() {
 
     setResumes([newResume, ...resumes]);
     setActiveResumeId(newResume.id);
-    setCurrentView('builder');
+    setCurrentView('dashboard');
 
     const welcomeNotif: AppNotification = {
       id: `notif-onboard-${Date.now()}`,
@@ -483,6 +598,9 @@ export default function App() {
       case 'jd-match':
         return <JDMatch resumes={resumes} />;
 
+      case 'cover-letter':
+        return <CoverLetterGenerator resumes={resumes} token={token} />;
+
       case 'settings':
         return (
           <Settings
@@ -600,6 +718,7 @@ export default function App() {
     return (
       <Onboarding
         onComplete={handleOnboardingComplete}
+        onCompleteWithParsedResume={handleOnboardingWithParsedResume}
         onCancel={handleLogout}
       />
     );
@@ -636,6 +755,7 @@ export default function App() {
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
               { id: 'jd-match', label: 'JD Matcher', icon: Target },
+              { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
               { id: 'settings', label: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -714,6 +834,7 @@ export default function App() {
                   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                   { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
                   { id: 'jd-match', label: 'JD Matcher', icon: Target },
+                  { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
                   { id: 'settings', label: 'Settings', icon: User },
                   { id: 'notifications', label: 'Notifications', icon: Bell }
                 ].map((tab) => {
