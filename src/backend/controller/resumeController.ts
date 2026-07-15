@@ -2,8 +2,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
-import { GoogleGenAI } from '@google/genai';
 import { requireAuth } from '../security/authMiddleware';
+import { hasAiKey, generateContent } from '../util/aiClient';
 import { fetchFullResume, saveFullResume } from '../repository/resumeRepository';
 import { calculateAtsScore } from '../../scoringEngine';
 import { Resume } from '../../types';
@@ -18,9 +18,6 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
-// Initialize Google Gen AI client
-const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
 // Helper: Clean JSON response from Gemini
 function cleanJsonResponse(text: string): string {
@@ -200,11 +197,11 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       return next(err);
     }
 
-    // B. Call Gemini to parse and structure raw text into Resume JSON object
-    if (!geminiApiKey) {
-      const err: any = new Error('Gemini API key is required to parse uploaded documents.');
+    // B. Call AI to parse and structure raw text into Resume JSON object
+    if (!hasAiKey) {
+      const err: any = new Error('AI API key (GEMINI_API_KEY or GROQ_API_KEY) is required to parse uploaded documents.');
       err.status = 500;
-      err.code = 'GEMINI_KEY_MISSING';
+      err.code = 'AI_KEY_MISSING';
       return next(err);
     }
 
@@ -276,12 +273,9 @@ Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wr
 Raw Resume Text to Parse:
 ${extractedText}`;
 
-    const parseResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: parsePrompt,
-    });
+    const parseResponseText = await generateContent(parsePrompt, true);
 
-    const parsedResumeJsonText = cleanJsonResponse(parseResponse.text || '{}');
+    const parsedResumeJsonText = cleanJsonResponse(parseResponseText || '{}');
     const parsedResume: Resume = JSON.parse(parsedResumeJsonText);
 
     // Assign IDs to experiences, educations, projects to keep consistent with local types
@@ -356,13 +350,10 @@ Return a valid JSON object conforming exactly to this structure:
 }
 Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wrap.`;
 
-    const recResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: recPrompt,
-    });
+    const recResponseText = await generateContent(recPrompt, true);
 
     try {
-      const recJsonText = cleanJsonResponse(recResponse.text || '{}');
+      const recJsonText = cleanJsonResponse(recResponseText || '{}');
       const recParsed = JSON.parse(recJsonText);
       if (recParsed && Array.isArray(recParsed.recommendations)) {
         analysisResult.recommendations = recParsed.recommendations;

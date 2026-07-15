@@ -1,14 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { GoogleGenAI } from '@google/genai';
 import { requireAuth } from '../security/authMiddleware';
 import { fetchJobDescriptions, saveJobDescription } from '../repository/jdRepository';
 import { Resume, JDMatchResult } from '../../types';
+import { hasAiKey, generateContent } from '../util/aiClient';
 
 const router = Router();
-
-// Initialize Google Gen AI client
-const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
 // Helper: Clean JSON response from Gemini
 function cleanJsonResponse(text: string): string {
@@ -30,7 +26,7 @@ router.post('/compare', async (req: Request, res: Response, next: NextFunction) 
       return next(err);
     }
 
-    if (!geminiApiKey) {
+    if (!hasAiKey) {
       const mockResult: JDMatchResult = {
         matchPercentage: 70,
         missingKeywords: ['system design', 'kubernetes', 'graphql'],
@@ -41,7 +37,7 @@ router.post('/compare', async (req: Request, res: Response, next: NextFunction) 
           { skill: 'react', status: 'found' },
           { skill: 'typescript', status: 'found' }
         ],
-        experienceGapNotes: 'No API key configured. Set GEMINI_API_KEY to receive custom AI phrasing guidance.'
+        experienceGapNotes: 'No API key configured. Set GEMINI_API_KEY or GROQ_API_KEY to receive custom AI phrasing guidance.'
       };
       return res.json({ data: mockResult });
     }
@@ -71,13 +67,10 @@ Analyze their skills, experience levels, and coordinates. Then output a valid JS
 Include up to 8 key skills/tools from the JD in the skillGaps array, classifying which ones are found or missing on the resume.
 Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wrap.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const responseText = await generateContent(prompt, true);
 
     try {
-      const jsonText = cleanJsonResponse(response.text || '{}');
+      const jsonText = cleanJsonResponse(responseText || '{}');
       const parsedResult: JDMatchResult = JSON.parse(jsonText);
       res.json({ data: parsedResult });
     } catch (parseErr) {
@@ -106,7 +99,7 @@ router.post('/improve', async (req: Request, res: Response, next: NextFunction) 
       return next(err);
     }
 
-    if (!geminiApiKey) {
+    if (!hasAiKey) {
       const fallback = action === 'enhance-bullet'
         ? `Spearheaded key strategic initiatives as ${title || 'Developer'}, improving core workflow performance by 25% and accelerating deployment latency.`
         : bullet.replace(/i did/gi, 'Successfully orchestrated').replace(/and got/gi, 'resulting in').trim();
@@ -119,12 +112,9 @@ Original bullet point: '${bullet}'
 
 Output ONLY the rewritten bullet point in plain text. Do not wrap in quotes. No explanation, intro, or markdown.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const responseText = await generateContent(prompt, false);
 
-    res.json({ suggestion: (response.text || '').trim() });
+    res.json({ suggestion: (responseText || '').trim() });
   } catch (err) {
     next(err);
   }
@@ -141,7 +131,7 @@ router.post('/generate-summary', async (req: Request, res: Response, next: NextF
       return next(err);
     }
 
-    if (!geminiApiKey) {
+    if (!hasAiKey) {
       const fallback = `Results-oriented ${resume.title || 'Professional'} with hands-on expertise in ${resume.skills?.slice(0, 4).join(', ') || 'software engineering'}. Proven track record designing scalable solutions, coordinating cross-functional deliverables, and engineering milestones.`;
       return res.json({ suggestion: fallback });
     }
@@ -155,12 +145,9 @@ Projects: ${JSON.stringify(resume.projects || [], null, 2)}
 Focus on high-impact language, strong action verbs, and highlight core competencies. Keep it professional, and do not use generic filler words.
 Output ONLY the summary text in plain text. Do not wrap in quotes. No explanation, intro, or markdown.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const responseText = await generateContent(prompt, false);
 
-    res.json({ suggestion: (response.text || '').trim() });
+    res.json({ suggestion: (responseText || '').trim() });
   } catch (err) {
     next(err);
   }

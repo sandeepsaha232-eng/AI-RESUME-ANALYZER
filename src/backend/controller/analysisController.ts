@@ -1,13 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { GoogleGenAI } from '@google/genai';
 import { calculateAtsScore } from '../../scoringEngine';
 import { Resume } from '../../types';
+import { hasAiKey, generateContent } from '../util/aiClient';
 
 const router = Router();
-
-// Initialize Google Gen AI client
-const geminiApiKey = process.env.GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
 // Helper: Clean JSON response from Gemini
 function cleanJsonResponse(text: string): string {
@@ -33,13 +29,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     // A. Run deterministic scoring engine
     const analysisResult = calculateAtsScore(resume);
 
-    // B. Call Gemini to generate recommendations explaining/tailoring to the score
-    if (!geminiApiKey) {
+    // B. Call AI to generate recommendations explaining/tailoring to the score
+    if (!hasAiKey) {
       analysisResult.recommendations = [
         {
           id: 'rec-1',
           category: 'keywords',
-          text: 'No Gemini API key configured. Please set GEMINI_API_KEY to receive real-time personalized recommendations.',
+          text: 'No Gemini or Groq API key configured. Please set GEMINI_API_KEY or GROQ_API_KEY to receive real-time personalized recommendations.',
           severity: 'medium',
           section: 'skills'
         }
@@ -76,13 +72,10 @@ Return a valid JSON object conforming exactly to this structure:
 Provide at least 3-5 high-quality, practical recommendations. Focus on incorporating action verbs, adding quantified achievements/metrics, resolving formatting issues, and adding missing details.
 Output ONLY a valid JSON object. No markdown block, no intro, no wrap.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const responseText = await generateContent(prompt, true);
 
     try {
-      const jsonText = cleanJsonResponse(response.text || '{}');
+      const jsonText = cleanJsonResponse(responseText || '{}');
       const parsed = JSON.parse(jsonText);
       if (parsed && Array.isArray(parsed.recommendations)) {
         analysisResult.recommendations = parsed.recommendations;
