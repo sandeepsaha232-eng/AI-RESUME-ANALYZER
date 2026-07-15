@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CircleAlert, CheckCircle, Sparkles, Target } from 'lucide-react';
 import { Resume, JDMatchResult } from '../types';
+import { safeFetchJson } from '../utils/apiHelper';
 
 interface JDMatchProps {
   resumes: Resume[];
@@ -22,16 +23,11 @@ export default function JDMatch({ resumes }: JDMatchProps) {
       const resume = resumes.find(r => r.id === selectedResumeId);
       if (!resume) throw new Error('Selected resume not found');
 
-      const response = await fetch('/api/v1/compare', {
+      const json = await safeFetchJson('/api/v1/compare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume, jdText }),
       });
-
-      const json = await response.json();
-      if (!response.ok || json.error) {
-        throw new Error(json.error?.message || 'Failed to compare resume with job description.');
-      }
 
       setMatchResult(json.data);
     } catch (err: any) {

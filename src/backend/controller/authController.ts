@@ -21,10 +21,22 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
       });
     }
 
+    const origin = req.get('origin') || req.get('referer');
+    let redirectUrl = 'https://ai-resume-analyzer-sepia-ten.vercel.app';
+    if (origin) {
+      try {
+        const parsed = new URL(origin);
+        redirectUrl = parsed.origin;
+      } catch (e) {
+        // fallback to default
+      }
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName || splitEmailName(email)
         }
@@ -102,12 +114,32 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
       .single();
 
     if (error || !profile) {
-      return res.status(404).json({
-        error: {
-          code: 'PROFILE_NOT_FOUND',
-          message: 'User profile was not initialized automatically'
-        }
-      });
+      // Robust fall-back check: Try to create the profile row if it doesn't exist to bridge the gap
+      const userEmail = (req as any).user.email;
+      const fallbackName = splitEmailName(userEmail);
+
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email: userEmail,
+          full_name: fallbackName,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (createError || !newProfile) {
+        return res.status(404).json({
+          error: {
+            code: 'PROFILE_NOT_FOUND',
+            message: 'User profile was not initialized automatically and fallback creation failed: ' + (createError?.message || 'Unknown error')
+          }
+        });
+      }
+
+      return res.json({ data: newProfile });
     }
 
     res.json({ data: profile });
@@ -124,13 +156,13 @@ router.put('/profile', requireAuth, async (req: Request, res: Response, next: Ne
 
     const { data, error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: userId,
         full_name: fullName,
         onboarded_target_title: targetTitle,
         experience_level: experienceLevel,
         updated_at: new Date().toISOString()
       })
-      .eq('id', userId)
       .select()
       .single();
 

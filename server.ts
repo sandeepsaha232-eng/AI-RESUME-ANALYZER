@@ -32,9 +32,46 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Basic health check route
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+import { supabase } from './src/supabaseClient';
+
+// Basic health check route with dynamic Supabase connectivity check
+app.get('/api/health', async (req: Request, res: Response) => {
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
+
+  let supabaseConfigured = false;
+  let supabaseConnectionError: string | null = null;
+  let profilesTableAccessible = false;
+
+  if (
+    supabaseUrl &&
+    supabaseUrl.startsWith('https://') &&
+    supabaseServiceKey &&
+    supabaseServiceKey !== 'your-supabase-service-role-key'
+  ) {
+    supabaseConfigured = true;
+    try {
+      const { error } = await supabase.from('profiles').select('id').limit(1);
+      if (error) {
+        supabaseConnectionError = error.message;
+      } else {
+        profilesTableAccessible = true;
+      }
+    } catch (e: any) {
+      supabaseConnectionError = e.message || String(e);
+    }
+  }
+
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    supabase: {
+      configured: supabaseConfigured,
+      connected: supabaseConfigured && !supabaseConnectionError,
+      profilesTableAccessible,
+      error: supabaseConnectionError
+    }
+  });
 });
 
 // ==========================================
@@ -84,6 +121,12 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.VERCEL) {
+  console.log('Running on Vercel serverless environment.');
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+export default app;

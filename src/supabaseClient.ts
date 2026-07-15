@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 
 let supabaseInstance: any;
 
@@ -26,35 +26,45 @@ if (supabaseUrl && supabaseUrl.startsWith('https://') && supabaseServiceKey && s
 
 function createFallbackProxy() {
   console.warn(
-    'WARNING: Running in offline mock mode because SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY are invalid or missing.'
+    'WARNING: Running in offline mock mode because SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) are invalid or missing.'
   );
-  return new Proxy({} as any, {
-    get(target, prop) {
-      if (prop === 'auth') {
-        return {
-          getUser: async () => ({ data: { user: null }, error: new Error('Supabase not configured') }),
-          signUp: async () => ({ data: { user: null, session: null }, error: new Error('Supabase not configured') }),
-          signInWithPassword: async () => ({ data: { user: null, session: null }, error: new Error('Supabase not configured') }),
-        };
+
+  const makeMock = (path: string[] = []): any => {
+    // Return a function so that the proxy remains callable as well as gettable
+    const target = () => {};
+
+    const proxy = new Proxy(target, {
+      get(t, prop) {
+        const propStr = String(prop);
+        if (propStr === 'then') {
+          return (resolve: any) => {
+            const hasPath = (name: string) => path.includes(name);
+
+            if (hasPath('signUp') || hasPath('signInWithPassword')) {
+              resolve({ data: { user: null, session: null }, error: new Error('Supabase not configured') });
+            } else if (hasPath('getUser')) {
+              resolve({ data: { user: null }, error: new Error('Supabase not configured') });
+            } else if (hasPath('single')) {
+              resolve({ data: null, error: new Error('Supabase not configured') });
+            } else if (hasPath('select') || hasPath('order')) {
+              resolve({ data: [], error: new Error('Supabase not configured') });
+            } else {
+              resolve({ data: null, error: new Error('Supabase not configured') });
+            }
+          };
+        }
+
+        return makeMock([...path, propStr]);
+      },
+      apply(t, thisArg, argumentsList) {
+        return makeMock(path);
       }
-      return () => ({
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: null, error: new Error('Supabase not configured') }),
-            order: async () => ({ data: [], error: new Error('Supabase not configured') }),
-          }),
-          order: async () => ({ data: [], error: new Error('Supabase not configured') }),
-        }),
-        upsert: async () => ({ error: new Error('Supabase not configured') }),
-        insert: async () => ({ error: new Error('Supabase not configured') }),
-        delete: () => ({
-          eq: () => ({
-            eq: async () => ({ error: new Error('Supabase not configured') }),
-          }),
-        }),
-      });
-    }
-  });
+    });
+
+    return proxy;
+  };
+
+  return makeMock();
 }
 
 export const supabase = supabaseInstance;
