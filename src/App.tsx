@@ -15,6 +15,7 @@ import JDMatch from './components/JDMatch';
 import Settings from './components/Settings';
 import NotificationCenter from './components/NotificationCenter';
 import ExportView from './components/ExportView';
+import CoverLetterGenerator from './components/CoverLetterGenerator';
 
 export default function App() {
   // 1. Session States
@@ -195,11 +196,42 @@ export default function App() {
     setCurrentView('dashboard');
   };
 
+  const handleOnboardingWithParsedResume = async (parsedResume: Resume) => {
+    setIsOnboarded(true);
+    localStorage.setItem('elevate_is_onboarded', 'true');
+
+    if (token) {
+      try {
+        const result = await safeFetchJson('/api/v1/resumes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ resume: parsedResume })
+        });
+        if (result.data) {
+          setResumes([result.data, ...resumes]);
+          setActiveResumeId(result.data.id);
+          setCurrentView('dashboard');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to save parsed onboarding resume:', err);
+      }
+    }
+
+    setResumes([parsedResume, ...resumes]);
+    setActiveResumeId(parsedResume.id);
+    setCurrentView('dashboard');
+  };
+
   // Onboarding Completed
   const handleOnboardingComplete = async (data: {
     targetTitle: string;
     experienceLevel: string;
     skills: string[];
+    photoUrl?: string;
   }) => {
     setIsOnboarded(true);
     localStorage.setItem('elevate_is_onboarded', 'true');
@@ -217,7 +249,8 @@ export default function App() {
         location: '',
         website: '',
         linkedin: '',
-        github: ''
+        github: '',
+        photoUrl: data.photoUrl
       },
       summary: `Motivated and goal-driven professional targeting a career advancement as a ${data.targetTitle}. Dedicated to utilizing solid competencies in ${data.skills.slice(0, 3).join(', ')} to coordinate operations and deliver valuable engineering milestones.`,
       experience: [],
@@ -255,7 +288,7 @@ export default function App() {
         if (result.data) {
           setResumes([result.data, ...resumes]);
           setActiveResumeId(result.data.id);
-          setCurrentView('builder');
+          setCurrentView('dashboard');
           return;
         }
       } catch (err) {
@@ -265,7 +298,7 @@ export default function App() {
 
     setResumes([newResume, ...resumes]);
     setActiveResumeId(newResume.id);
-    setCurrentView('builder');
+    setCurrentView('dashboard');
 
     const welcomeNotif: AppNotification = {
       id: `notif-onboard-${Date.now()}`,
@@ -483,6 +516,9 @@ export default function App() {
       case 'jd-match':
         return <JDMatch resumes={resumes} />;
 
+      case 'cover-letter':
+        return <CoverLetterGenerator resumes={resumes} token={token} />;
+
       case 'settings':
         return (
           <Settings
@@ -600,6 +636,7 @@ export default function App() {
     return (
       <Onboarding
         onComplete={handleOnboardingComplete}
+        onCompleteWithParsedResume={handleOnboardingWithParsedResume}
         onCancel={handleLogout}
       />
     );
@@ -636,6 +673,7 @@ export default function App() {
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
               { id: 'jd-match', label: 'JD Matcher', icon: Target },
+              { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
               { id: 'settings', label: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -714,6 +752,7 @@ export default function App() {
                   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                   { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
                   { id: 'jd-match', label: 'JD Matcher', icon: Target },
+                  { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
                   { id: 'settings', label: 'Settings', icon: User },
                   { id: 'notifications', label: 'Notifications', icon: Bell }
                 ].map((tab) => {

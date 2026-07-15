@@ -2,34 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Award, Briefcase, ChevronRight, FileText, Sparkles, Target, Zap, UploadCloud,
-  AlertCircle, ArrowRight, MessageSquare, Send, Check, Paperclip, Star, Info,
+  AlertCircle, ArrowRight, Check, Star, Info,
   Volume2, Flame, Shield, HelpCircle, Laptop, Settings, Eye, Users, Cpu, FileUp, ListFilter, Play, Github
 } from 'lucide-react';
 import CanvasVisualizer from './three/CanvasVisualizer';
-import AladdinBot, { globalBotTargetSetter } from './three/AladdinBot';
+import AladdinBot from './three/AladdinBot';
 import { Resume } from '../types';
 import { safeFetchJson } from '../utils/apiHelper';
-
-// Simple and highly optimized typewriter helper component
-function TypewriterText({ text, speed = 20 }: { text: string; speed?: number }) {
-  const [displayed, setDisplayed] = useState('');
-
-  useEffect(() => {
-    setDisplayed('');
-    let index = 0;
-    const timer = setInterval(() => {
-      if (index < text.length) {
-        setDisplayed((prev) => prev + text.charAt(index));
-        index++;
-      } else {
-        clearInterval(timer);
-      }
-    }, speed);
-    return () => clearInterval(timer);
-  }, [text, speed]);
-
-  return <span>{displayed}</span>;
-}
 
 interface MarketingLandingProps {
   onGetStarted: () => void;
@@ -48,15 +27,6 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
   } | null>(null);
   const [uploadError, setUploadError] = useState('');
   const [dragActive, setDragActive] = useState(false);
-
-  // 2. Genie Bot States
-  const [botState, setBotState] = useState<'idle' | 'thinking' | 'success' | 'pointing'>('idle');
-  const [chatOpen, setChatOpen] = useState(false); // set default to false on load to save screen real estate on mobile
-  const [userMsg, setUserMsg] = useState('');
-  const [highlightPortal, setHighlightPortal] = useState(false);
-  const [chatHistory, setChatHistory] = useState<Array<{ sender: 'user' | 'bot'; text: string; hasTypewriter?: boolean }>>([
-    { sender: 'bot', text: "Hey! I am your Aladdin Guide Jin. 🔮 How's your life going? Tell me, are you searching for a magical career upgrade or just chatting? Ask me anything, or guide me to read your scrolls!", hasTypewriter: false }
-  ]);
 
   // 3. Interactive Templates State
   const [activeTemplate, setActiveTemplate] = useState('Modern');
@@ -77,63 +47,6 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
     }, 4500);
     return () => clearInterval(interval);
   }, []);
-
-  // Conversational Handler
-  const handleSendMessage = (e?: React.FormEvent, customMsg?: string) => {
-    if (e) e.preventDefault();
-    const msgToSend = customMsg || userMsg;
-    if (!msgToSend.trim()) return;
-
-    const userClean = msgToSend.trim();
-    setChatHistory((prev) => [...prev, { sender: 'user', text: userClean }]);
-    if (!customMsg) setUserMsg('');
-    setBotState('thinking');
-
-    // Simulate thinking delay
-    setTimeout(() => {
-      const lower = userClean.toLowerCase();
-      let reply = "Mmm, that's deep. Life has its waves, but I am here to make sure your career isn't one of those sinking ships! 🚢 Directly upload your PDF, DOCX, or JPG resume in the portal, or right here in the chat, and let's get you set up with a luxurious rating!";
-
-      if (lower.includes('how are you') || lower.includes('how\'s it going') || lower.includes('how is it going')) {
-        reply = "I'm floating on cloud nine! ✨ Literally, since my tail is pure glowing neon cosmic energy rising from my magic lamp. How is your life going today, master?";
-      } else if (lower.includes('life') || lower.includes('sad') || lower.includes('happy') || lower.includes('struggle') || lower.includes('how is your life')) {
-        reply = "My life is bound to this magic lamp, but helping you beat recruiting algorithms is my supreme joy! Tell me, how has your job search been? Hard or smooth?";
-      } else if (lower.includes('what is this') || lower.includes('website') || lower.includes('how does this work') || lower.includes('elevate')) {
-        reply = "This is Elevate Resume! A cosmic sanctuary where we audit resumes with bulletproof, deterministic recruiter logic and power up highlights with Gemini AI. None of that lazy, hallucinating LLM prompt stuff!";
-      } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-        reply = "Hello there, beautiful human! 👋 Ready to cast a magic spell on your career today?";
-      } else if (lower.includes('love') || lower.includes('marry') || lower.includes('date')) {
-        reply = "Oh my, you're making my neon eyes glow magenta! 😳 I'm extremely flattered, but my true love is auditing bullet points and optimizing ATS scores!";
-      } else if (lower.includes('premium') || lower.includes('cost') || lower.includes('price')) {
-        reply = "It looks absolutely premium and luxurious, doesn't it? But here's the best part: you can analyze and get rated entirely for free! Let's get started!";
-      } else if (lower.includes('how to upload') || lower.includes('guide') || lower.includes('upload') || lower.includes('where to upload')) {
-        triggerGuideAnimation();
-        return;
-      }
-
-      setChatHistory((prev) => [...prev, { sender: 'bot', text: reply, hasTypewriter: true }]);
-      setBotState('idle');
-    }, 90000 / 90);
-  };
-
-  const triggerGuideAnimation = () => {
-    setBotState('pointing');
-    setHighlightPortal(true);
-    setChatOpen(true);
-    setChatHistory((prev) => [
-      ...prev,
-      {
-        sender: 'bot',
-        text: "LOOK OVER THERE, MASTER! 🌟 I am focusing my cosmic gold energy on the center of the screen! Simply drop your scroll (PDF, DOCX, or JPG/PNG image resume) right into that glowing portal, or click 'Select File' to begin our magical evaluation!",
-        hasTypewriter: true,
-      },
-    ]);
-
-    setTimeout(() => {
-      setHighlightPortal(false);
-      setBotState('idle');
-    }, 4500);
-  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -190,17 +103,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
     setIsAnalyzing(true);
     setUploadError('');
-    setBotState('thinking');
     setAnalysisResult(null);
-
-    // Command Bot to fly to Upload zone and trigger magical processing animation vortex
-    const dropzoneElement = document.getElementById('dropzone-element');
-    if (dropzoneElement && globalBotTargetSetter) {
-      const rect = dropzoneElement.getBoundingClientRect();
-      const x = rect.left + rect.width / 2 - window.innerWidth / 2;
-      const y = -(rect.top + rect.height / 2 - window.innerHeight / 2);
-      globalBotTargetSetter(x, y, true);
-    }
 
     try {
       const formData = new FormData();
@@ -216,24 +119,12 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
       setAnalysisResult({
         score,
-        pickupLine: getCheekyPickupLine(score),
         parsedResume: resume,
+        pickupLine: getCheekyPickupLine(score),
       });
-
-      setBotState('success');
-      setChatOpen(true);
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: `Incredible! I finished evaluating your resume. It scores ${score}%. ${getCheekyPickupLine(score).split('.')[0]}. Check out your gorgeous profile rating card on the screen! 👇`,
-          hasTypewriter: true,
-        },
-      ]);
     } catch (err: any) {
       console.error(err);
       setUploadError(err.message || 'Parser is temporarily resting in its lamp. Ensure server is online!');
-      setBotState('idle');
     } finally {
       setIsAnalyzing(false);
     }
@@ -335,10 +226,6 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
               <span>Create Free Resume</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-            <button onClick={triggerGuideAnimation} className="w-full py-3.5 sm:py-4 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-[11px] sm:text-xs rounded-xl transition-all uppercase tracking-wider flex items-center justify-center space-x-2">
-              <FileText className="w-4 h-4 text-cyan-400" />
-              <span>Ask Genie to Rate</span>
-            </button>
           </div>
         </section>
 
@@ -368,11 +255,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
             {!analysisResult ? (
               <motion.div
                 key="dropzone"
-                className={`relative rounded-3xl p-0.5 transition-all duration-700 ${
-                  highlightPortal
-                    ? 'bg-gradient-to-r from-yellow-400 via-pink-500 to-yellow-300 scale-102 ring-2 sm:ring-4 ring-yellow-400/50 shadow-[0_0_30px_rgba(234,179,8,0.3)]'
-                    : 'bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 hover:from-indigo-500/40'
-                }`}
+                className="relative rounded-3xl p-0.5 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 hover:from-indigo-500/40 transition-all duration-700"
               >
                 <div
                   onDragEnter={handleDrag}
@@ -440,11 +323,40 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                       </div>
                     </div>
                   </div>
+
                   <div className="max-w-md mx-auto p-3.5 sm:p-4 bg-white/5 border border-white/10 rounded-2xl">
                     <p className="text-xs text-slate-200 leading-relaxed font-medium">"{analysisResult.pickupLine}"</p>
                   </div>
+
+                  {/* Locked Recruiter Diagnostic Preview */}
+                  <div className="relative border border-white/5 bg-white/[0.01] rounded-2xl p-6 overflow-hidden">
+                    {/* Blurry report blocks */}
+                    <div className="filter blur-[5px] select-none pointer-events-none space-y-4 text-left">
+                      <div>
+                        <span className="text-xxs font-bold text-red-400 uppercase">⚠️ Recruiter Rejection Risk (Critical)</span>
+                        <p className="text-xs text-slate-300 mt-1">This resume is at high risk of automatic rejection because of passive phrasing and non-ATS compliant section headings...</p>
+                      </div>
+                      <div className="h-px bg-white/5" />
+                      <div>
+                        <span className="text-xxs font-bold text-amber-400 uppercase">🔍 Found 14 Red-flag Buzzwords</span>
+                        <p className="text-xs text-slate-300 mt-1">Found words like "dynamic", "motivated", "detail-oriented" which weaken impact. Passive phrasing identified in experience section...</p>
+                      </div>
+                    </div>
+
+                    {/* Locking Glassmorphic Overlay */}
+                    <div className="absolute inset-0 bg-[#0b0b14]/75 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+                      <div className="p-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-400 mb-2.5">
+                        <Shield className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-extrabold text-white">Recruiter Report Locked</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                        To protect privacy and unlock the full breakdown of rejection reasons, missing skills, and improvement advice, please log in first.
+                      </p>
+                    </div>
+                  </div>
+
                   <button onClick={claimWorkspace} className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2 mx-auto">
-                    <span>Claim Workspace & Fix Resume</span>
+                    <span>Create Account & Unlock Full Report</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -850,125 +762,10 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
       </main>
 
-      {/* Floating Aladdin's Jin Guide & Interactive Chat HUD */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end space-y-3 max-w-[90vw]">
-        <AnimatePresence>
-          {chatOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-76 sm:w-80 md:w-96 rounded-2xl bg-[#090912]/95 border border-indigo-500/20 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col max-h-[380px] sm:max-h-[440px] md:max-h-[480px]"
-            >
-              {/* Chat Title bar */}
-              <div className="p-3 sm:p-4 bg-indigo-950/40 border-b border-indigo-500/20 flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[10px] sm:text-xs font-black tracking-wide text-white uppercase flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>Aladdin's Jin Guide</span>
-                  </span>
-                </div>
-                <button
-                  onClick={() => setChatOpen(false)}
-                  className="text-slate-400 hover:text-white text-xs font-bold"
-                >
-                  Hide
-                </button>
-              </div>
-
-              {/* Chat Log Message Scroller */}
-              <div className="flex-grow p-3 sm:p-4 overflow-y-auto space-y-3.5 text-xxs sm:text-xs scrollbar-thin">
-                {chatHistory.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${item.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[85%] px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl leading-relaxed ${
-                        item.sender === 'user'
-                          ? 'bg-indigo-600 text-white rounded-tr-none'
-                          : 'bg-white/5 text-slate-200 border border-white/5 rounded-tl-none'
-                      }`}
-                    >
-                      {item.sender === 'bot' && item.hasTypewriter ? (
-                        <TypewriterText text={item.text} speed={12} />
-                      ) : (
-                        <span>{item.text}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Interactive Quick-Action buttons inside the conversation HUD */}
-              <div className="p-1.5 bg-black/40 border-t border-white/5 flex flex-wrap gap-1 justify-center">
-                <button
-                  onClick={triggerGuideAnimation}
-                  className="px-2 py-0.5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 rounded-full text-[9px] font-bold text-slate-300 hover:text-white transition-colors"
-                >
-                  🎯 How to upload?
-                </button>
-                <button
-                  onClick={() => handleSendMessage(undefined, "how does this website work?")}
-                  className="px-2 py-0.5 bg-white/5 hover:bg-indigo-500/20 border border-white/10 rounded-full text-[9px] font-bold text-slate-300 hover:text-white transition-colors"
-                >
-                  🔮 How do you work?
-                </button>
-
-                {/* PDF/DOCX/JPG Attachment helper directly inside Chat Box */}
-                <label
-                  htmlFor="chat-direct-file-upload"
-                  className="px-2 py-0.5 bg-white/5 hover:bg-cyan-500/20 border border-cyan-500/20 rounded-full text-[9px] font-bold text-cyan-300 hover:text-cyan-200 cursor-pointer transition-colors flex items-center gap-1"
-                >
-                  <Paperclip className="w-2.5 h-2.5" />
-                  <span>Upload Resume Scroll</span>
-                </label>
-                <input
-                  type="file"
-                  id="chat-direct-file-upload"
-                  accept=".pdf,.docx,.jpg,.jpeg,.png"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              {/* Input Form */}
-              <form onSubmit={handleSendMessage} className="p-2 sm:p-3 bg-[#07070d] border-t border-indigo-500/10 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Type to talk with Jin..."
-                  value={userMsg}
-                  onChange={(e) => setUserMsg(e.target.value)}
-                  className="flex-grow px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xxs sm:text-xs text-white focus:outline-none focus:border-indigo-500/50"
-                />
-                <button
-                  type="submit"
-                  className="p-1.5 sm:p-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Aladdin Genie floating launcher and toggle */}
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <button
-            onClick={() => setChatOpen(!chatOpen)}
-            className="px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-950/90 border border-indigo-500/30 text-white rounded-full text-[9px] sm:text-xxs font-black shadow-lg hover:bg-indigo-900 transition-colors uppercase tracking-widest flex items-center space-x-1"
-          >
-            <MessageSquare className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
-            <span>{chatOpen ? 'Hide Guide' : 'Consult Genie'}</span>
-          </button>
-
-          <div
-            onClick={() => setChatOpen(true)}
-            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-tr from-[#0b0b14] to-[#12122b] rounded-full border border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.3)] cursor-pointer hover:scale-105 active:scale-95 transition-all relative overflow-hidden shrink-0"
-          >
-            <AladdinBot state={botState} />
-          </div>
+      {/* Floating Aladdin Genie Widget - Pure Aesthetic Decoration */}
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-tr from-[#0b0b14] to-[#12122b] rounded-full border border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.3)] relative overflow-hidden shrink-0">
+          <AladdinBot />
         </div>
       </div>
 
