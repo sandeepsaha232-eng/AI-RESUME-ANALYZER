@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowUp, ArrowDown, Download, Eye, Layout, Plus, Sparkles, Trash2, Check, X } from 'lucide-react';
 import { Resume, Experience, Education, Project, Certification, Language } from '../types';
+import { safeFetchJson } from '../utils/apiHelper';
 
 interface ResumeBuilderProps {
   resume: Resume;
@@ -298,9 +299,9 @@ export default function ResumeBuilder({ resume, onSave, onBack, onNavigateToExpo
     setAiLoading(true);
 
     try {
-      let response: Response;
+      let json: any;
       if (action === 'enhance-bullet' || action === 'fix-grammar') {
-        response = await fetch('/api/v1/improve', {
+        json = await safeFetchJson('/api/v1/improve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -310,16 +311,11 @@ export default function ResumeBuilder({ resume, onSave, onBack, onNavigateToExpo
           }),
         });
       } else {
-        response = await fetch('/api/v1/generate-summary', {
+        json = await safeFetchJson('/api/v1/generate-summary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resume: localResume }),
         });
-      }
-
-      const json = await response.json();
-      if (!response.ok || json.error) {
-        throw new Error(json.error?.message || 'Failed to generate AI suggestion.');
       }
 
       setAiSuggestion(json.suggestion);

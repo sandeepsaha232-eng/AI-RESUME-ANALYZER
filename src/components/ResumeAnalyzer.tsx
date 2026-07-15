@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle, ArrowRight, FileText, UploadCloud, Zap } from 'lucide-react';
 import { Resume, AnalyzerResult } from '../types';
+import { safeFetchJson } from '../utils/apiHelper';
 
 interface ResumeAnalyzerProps {
   resumes: Resume[];
@@ -63,15 +64,10 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit, onAddRes
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/v1/resumes/upload', {
+      const json = await safeFetchJson('/api/v1/resumes/upload', {
         method: 'POST',
         body: formData,
       });
-
-      const json = await response.json();
-      if (!response.ok || json.error) {
-        throw new Error(json.error?.message || 'Failed to upload and parse resume.');
-      }
 
       const { resume, analysis } = json.data;
 
@@ -99,16 +95,11 @@ export default function ResumeAnalyzer({ resumes, onSelectResumeToEdit, onAddRes
     setUploadError('');
 
     try {
-      const response = await fetch('/api/v1/analyze', {
+      const json = await safeFetchJson('/api/v1/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume: res }),
       });
-
-      const json = await response.json();
-      if (!response.ok || json.error) {
-        throw new Error(json.error?.message || 'Failed to analyze resume.');
-      }
 
       setAnalysisResult(json.data);
     } catch (err: any) {

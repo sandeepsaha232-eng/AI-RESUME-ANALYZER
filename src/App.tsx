@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Award, Bell, Briefcase, FileText, Laptop, LayoutDashboard, LogOut, Menu, Moon, Shield, Sparkles, Sun, Target, User, X } from 'lucide-react';
 import { Resume, AppNotification, UserSettings } from './types';
 import { mockResumes } from './data/mockResumes';
+import { safeFetchJson } from './utils/apiHelper';
 
 // Component imports
 import MarketingLanding from './components/MarketingLanding';
@@ -51,13 +52,12 @@ export default function App() {
 
     const fetchResumes = async () => {
       try {
-        const response = await fetch('/api/v1/resumes', {
+        const result = await safeFetchJson('/api/v1/resumes', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        const result = await response.json();
-        if (response.ok && result.data) {
+        if (result.data) {
           setResumes(result.data);
         }
       } catch (e) {
@@ -231,7 +231,7 @@ export default function App() {
     // Save profile attributes to DB
     if (token) {
       try {
-        await fetch('/api/v1/auth/profile', {
+        await safeFetchJson('/api/v1/auth/profile', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ export default function App() {
           })
         });
 
-        const response = await fetch('/api/v1/resumes', {
+        const result = await safeFetchJson('/api/v1/resumes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -252,8 +252,7 @@ export default function App() {
           },
           body: JSON.stringify({ resume: newResume })
         });
-        const result = await response.json();
-        if (response.ok && result.data) {
+        if (result.data) {
           setResumes([result.data, ...resumes]);
           setActiveResumeId(result.data.id);
           setCurrentView('builder');
@@ -306,7 +305,7 @@ export default function App() {
 
     if (token) {
       try {
-        const response = await fetch('/api/v1/resumes', {
+        const result = await safeFetchJson('/api/v1/resumes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -314,8 +313,7 @@ export default function App() {
           },
           body: JSON.stringify({ resume: newResume })
         });
-        const result = await response.json();
-        if (response.ok && result.data) {
+        if (result.data) {
           setResumes([result.data, ...resumes]);
           setActiveResumeId(result.data.id);
           setCurrentView('builder');
@@ -342,7 +340,7 @@ export default function App() {
 
     if (token) {
       try {
-        const response = await fetch('/api/v1/resumes', {
+        const result = await safeFetchJson('/api/v1/resumes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -350,8 +348,7 @@ export default function App() {
           },
           body: JSON.stringify({ resume: copy })
         });
-        const result = await response.json();
-        if (response.ok && result.data) {
+        if (result.data) {
           setResumes([result.data, ...resumes]);
           return;
         }
@@ -379,7 +376,7 @@ export default function App() {
     
     if (token) {
       try {
-        await fetch(`/api/v1/resumes/${id}`, {
+        await safeFetchJson(`/api/v1/resumes/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -408,7 +405,7 @@ export default function App() {
 
     if (token) {
       try {
-        await fetch(`/api/v1/resumes/${updated.id}`, {
+        await safeFetchJson(`/api/v1/resumes/${updated.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -535,14 +532,13 @@ export default function App() {
 
     try {
       // 1. Sign up guest
-      const signUpRes = await fetch('/api/v1/auth/signup', {
+      const signUpJson = await safeFetchJson('/api/v1/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: guestEmail, password: guestPassword, fullName: 'Aladdin Guest' })
       });
-      const signUpJson = await signUpRes.json();
 
-      if (signUpRes.ok && signUpJson.data?.session?.access_token) {
+      if (signUpJson.data?.session?.access_token) {
         const guestToken = signUpJson.data.session.access_token;
         setUserEmail(guestEmail);
         setToken(guestToken);
@@ -552,7 +548,7 @@ export default function App() {
         localStorage.setItem('elevate_is_onboarded', 'true');
 
         // 2. Save parsed resume to guest's remote database account
-        const saveRes = await fetch('/api/v1/resumes', {
+        const saveJson = await safeFetchJson('/api/v1/resumes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -560,8 +556,7 @@ export default function App() {
           },
           body: JSON.stringify({ resume: parsed })
         });
-        const saveJson = await saveRes.json();
-        if (saveRes.ok && saveJson.data) {
+        if (saveJson.data) {
           setResumes([saveJson.data, ...resumes]);
           setActiveResumeId(saveJson.data.id);
           setCurrentView('builder');
