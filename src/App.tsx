@@ -15,6 +15,7 @@ import JDMatch from './components/JDMatch';
 import Settings from './components/Settings';
 import NotificationCenter from './components/NotificationCenter';
 import ExportView from './components/ExportView';
+import CoverLetterGenerator from './components/CoverLetterGenerator';
 
 export default function App() {
   // 1. Session States
@@ -483,6 +484,9 @@ export default function App() {
       case 'jd-match':
         return <JDMatch resumes={resumes} />;
 
+      case 'cover-letter':
+        return <CoverLetterGenerator resumes={resumes} token={token} />;
+
       case 'settings':
         return (
           <Settings
@@ -636,6 +640,7 @@ export default function App() {
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
               { id: 'jd-match', label: 'JD Matcher', icon: Target },
+              { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
               { id: 'settings', label: 'Settings', icon: User }
             ].map((tab) => {
               const Icon = tab.icon;
@@ -714,6 +719,7 @@ export default function App() {
                   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                   { id: 'analyzer', label: 'ATS Analyzer', icon: FileText },
                   { id: 'jd-match', label: 'JD Matcher', icon: Target },
+                  { id: 'cover-letter', label: 'Cover Letter', icon: Sparkles },
                   { id: 'settings', label: 'Settings', icon: User },
                   { id: 'notifications', label: 'Notifications', icon: Bell }
                 ].map((tab) => {
