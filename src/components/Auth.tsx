@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Eye, EyeOff, Lock, Mail, Sparkles, User } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { safeFetchJson } from '../utils/apiHelper';
 
@@ -142,10 +142,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
         
-        <div className="relative z-10 flex items-center space-x-2.5">
-          <div className="p-2 bg-white/10 rounded-xl flex items-center justify-center text-white border border-white/10">
-            <Sparkles className="w-5 h-5 animate-pulse" />
-          </div>
+        <div className="relative z-10 flex items-center">
           <span className="font-sans font-semibold text-lg tracking-tight">
             Elevate Resume
           </span>
@@ -179,8 +176,7 @@ export default function Auth({ onSuccess, onCancel }: AuthProps) {
             <span>Back</span>
           </button>
           
-          <div className="flex items-center space-x-1.5 md:hidden">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
+          <div className="flex items-center md:hidden">
             <span className="font-semibold text-sm bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
               Elevate
             </span>
