@@ -19,6 +19,27 @@ function cleanJsonResponse(text: string): string {
   return cleaned.trim();
 }
 
+// Helper: Run generation with robust newer model fallbacks to prevent 404/NOT_FOUND errors
+async function generateContentWithFallback(contents: string): Promise<any> {
+  const models = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents,
+      });
+      if (response && response.text) {
+        return response;
+      }
+    } catch (e: any) {
+      console.warn(`Model ${model} failed, trying next fallback:`, e.message || e);
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('All Gemini model fallbacks exhausted.');
+}
+
 // 1. POST /api/v1/compare (AI-based matching and gap analysis against a job description)
 router.post('/compare', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -71,10 +92,7 @@ Analyze their skills, experience levels, and coordinates. Then output a valid JS
 Include up to 8 key skills/tools from the JD in the skillGaps array, classifying which ones are found or missing on the resume.
 Output ONLY a valid JSON object. No markdown block, no comments, no intro, no wrap.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const response = await generateContentWithFallback(prompt);
 
     try {
       const jsonText = cleanJsonResponse(response.text || '{}');
@@ -119,10 +137,7 @@ Original bullet point: '${bullet}'
 
 Output ONLY the rewritten bullet point in plain text. Do not wrap in quotes. No explanation, intro, or markdown.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const response = await generateContentWithFallback(prompt);
 
     res.json({ suggestion: (response.text || '').trim() });
   } catch (err) {
@@ -155,49 +170,7 @@ Projects: ${JSON.stringify(resume.projects || [], null, 2)}
 Focus on high-impact language, strong action verbs, and highlight core competencies. Keep it professional, and do not use generic filler words.
 Output ONLY the summary text in plain text. Do not wrap in quotes. No explanation, intro, or markdown.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-
-    res.json({ suggestion: (response.text || '').trim() });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// 6. POST /api/v1/generate-cover-letter
-router.post('/generate-cover-letter', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { resume, jdText, company, role } = req.body as { resume: Resume; jdText?: string; company?: string; role?: string };
-    if (!resume) {
-      const err: any = new Error('Resume object is required');
-      err.status = 400;
-      err.code = 'RESUME_REQUIRED';
-      return next(err);
-    }
-
-    if (!geminiApiKey) {
-      const fallback = `Dear Hiring Manager${company ? ' at ' + company : ''},\n\nI am writing to express my enthusiastic interest in the ${role || resume.title || 'Professional'} position. With a strong background in ${resume.skills?.slice(0, 3).join(', ') || 'relevant technologies'} and experience as a ${resume.experience?.[0]?.position || 'specialist'}, I am confident in my ability to deliver immediate value to your engineering and operations teams.\n\nThroughout my career, I have consistently demonstrated a commitment to high-quality standards and results-driven project execution. I look forward to the possibility of discussing how my skills align with your current needs.\n\nSincerely,\n${resume.personalInfo?.fullName || 'Candidate'}`;
-      return res.json({ suggestion: fallback });
-    }
-
-    const prompt = `Draft a beautifully tailored cover letter (length: 1200-1800 characters) for a candidate applying to a position based on the following profile:
-Candidate Info: ${JSON.stringify(resume.personalInfo || {}, null, 2)}
-Candidate Summary: ${resume.summary || ''}
-Target Company: ${company || 'N/A'}
-Target Role: ${role || 'N/A'}
-Target Job Description: ${jdText || 'N/A'}
-Candidate Experiences: ${JSON.stringify(resume.experience || [], null, 2)}
-Candidate Skills: ${resume.skills?.join(', ') || 'N/A'}
-
-Ensure the cover letter is structured professionally (Header, Salutation, Engaging Introduction, 2 Core Body Paragraphs detailing metrics/achievements matching the job description, and a Call-to-action Closing). Keep the language punchy and results-driven.
-Output ONLY the cover letter text in plain text. No markdown block, no comments, no explanation, no headers.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const response = await generateContentWithFallback(prompt);
 
     res.json({ suggestion: (response.text || '').trim() });
   } catch (err) {
