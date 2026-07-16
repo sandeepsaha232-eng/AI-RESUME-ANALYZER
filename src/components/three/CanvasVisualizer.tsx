@@ -6,31 +6,29 @@ interface CanvasVisualizerProps {
 }
 
 export default function CanvasVisualizer({ intensity = 'high', reduceMotion = false }: CanvasVisualizerProps) {
-  // Floating subtle aesthetic dots
+  // Let's create an array of floating dots with fixed, randomized offsets so they look completely organic
   const dots = [
-    { size: 8, top: '15%', left: '10%', duration: '25s', delay: '0s', tx: '20px', ty: '-30px' },
-    { size: 14, top: '25%', left: '75%', duration: '35s', delay: '-5s', tx: '-40px', ty: '40px' },
-    { size: 6, top: '45%', left: '35%', duration: '18s', delay: '-2s', tx: '25px', ty: '25px' },
-    { size: 10, top: '65%', left: '20%', duration: '28s', delay: '-8s', tx: '-20px', ty: '-45px' },
-    { size: 8, top: '80%', left: '80%', duration: '30s', delay: '-3s', tx: '35px', ty: '-20px' },
-    { size: 16, top: '55%', left: '85%', duration: '40s', delay: '-12s', tx: '-50px', ty: '-30px' },
-    { size: 6, top: '10%', left: '50%', duration: '22s', delay: '-6s', tx: '-15px', ty: '35px' },
-    { size: 12, top: '85%', left: '45%', duration: '32s', delay: '-10s', tx: '45px', ty: '-40px' },
+    { size: 12, top: '15%', left: '10%', duration: '25s', delay: '0s', tx: '40px', ty: '-60px' },
+    { size: 36, top: '25%', left: '75%', duration: '35s', delay: '-5s', tx: '-80px', ty: '80px' },
+    { size: 8, top: '45%', left: '35%', duration: '18s', delay: '-2s', tx: '50px', ty: '50px' },
+    { size: 24, top: '65%', left: '20%', duration: '28s', delay: '-8s', tx: '-40px', ty: '-90px' },
+    { size: 16, top: '80%', left: '80%', duration: '30s', delay: '-3s', tx: '70px', ty: '-40px' },
+    { size: 48, top: '55%', left: '85%', duration: '40s', delay: '-12s', tx: '-100px', ty: '-60px' },
+    { size: 10, top: '10%', left: '50%', duration: '22s', delay: '-6s', tx: '-30px', ty: '70px' },
+    { size: 32, top: '85%', left: '45%', duration: '32s', delay: '-10s', tx: '90px', ty: '-80px' },
+    { size: 14, top: '35%', left: '90%', duration: '26s', delay: '-1s', tx: '-50px', ty: '90px' },
+    { size: 28, top: '70%', left: '55%', duration: '34s', delay: '-4s', tx: '60px', ty: '60px' },
   ];
 
-  // Rich, sophisticated, yet professional colors (No neon cyan/pinks).
-  // Uses deep sapphire blue, elegant royal indigo, and warm rich amber/champagne gold.
+  // Soft gradient blobs to add that premium "cosmic" feel without being distracting
   const blobs = [
-    // Royal Indigo
-    { color: 'radial-gradient(circle, rgba(79, 70, 229, 0.14) 0%, rgba(0,0,0,0) 80%)', width: '600px', height: '600px', top: '-10%', left: '-10%', duration: '40s', delay: '0s' },
-    // Sophisticated Rich Amber/Bronze Gold
-    { color: 'radial-gradient(circle, rgba(217, 119, 6, 0.08) 0%, rgba(0,0,0,0) 75%)', width: '500px', height: '500px', bottom: '15%', right: '-5%', duration: '45s', delay: '-10s' },
-    // Elegant Sapphire Blue
-    { color: 'radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(0,0,0,0) 80%)', width: '550px', height: '550px', top: '40%', left: '50%', duration: '50s', delay: '-5s' },
+    { color: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0,0,0,0) 70%)', width: '600px', height: '600px', top: '-10%', left: '-10%', duration: '40s', delay: '0s' },
+    { color: 'radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, rgba(0,0,0,0) 70%)', width: '500px', height: '500px', bottom: '15%', right: '-5%', duration: '45s', delay: '-10s' },
+    { color: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(0,0,0,0) 70%)', width: '550px', height: '550px', top: '40%', left: '50%', duration: '50s', delay: '-5s' },
   ];
 
   return (
-    <div className="fixed inset-0 w-full h-full -z-50 overflow-hidden select-none pointer-events-none bg-[#0a0a0c]">
+    <div className="fixed inset-0 w-full h-full -z-50 overflow-hidden select-none pointer-events-none bg-[#05050C]">
       {/* Styles Injection */}
       <style>{`
         @keyframes float-blob {
@@ -38,10 +36,10 @@ export default function CanvasVisualizer({ intensity = 'high', reduceMotion = fa
             transform: translate3d(0, 0, 0) scale(1);
           }
           33% {
-            transform: translate3d(25px, -20px, 0) scale(1.05);
+            transform: translate3d(50px, -40px, 0) scale(1.1);
           }
           66% {
-            transform: translate3d(-15px, 25px, 0) scale(0.98);
+            transform: translate3d(-30px, 50px, 0) scale(0.95);
           }
           100% {
             transform: translate3d(0, 0, 0) scale(1);
@@ -53,7 +51,7 @@ export default function CanvasVisualizer({ intensity = 'high', reduceMotion = fa
             transform: translate3d(0, 0, 0);
           }
           50% {
-            transform: translate3d(var(--tx, 20px), var(--ty, -30px), 0);
+            transform: translate3d(var(--tx, 40px), var(--ty, -60px), 0);
           }
           100% {
             transform: translate3d(0, 0, 0);
@@ -64,7 +62,7 @@ export default function CanvasVisualizer({ intensity = 'high', reduceMotion = fa
           position: absolute;
           border-radius: 50%;
           mix-blend-mode: screen;
-          filter: blur(100px);
+          filter: blur(80px);
           pointer-events: none;
           will-change: transform;
         }
@@ -72,7 +70,7 @@ export default function CanvasVisualizer({ intensity = 'high', reduceMotion = fa
         .premium-dot {
           position: absolute;
           border-radius: 50%;
-          background-color: rgba(148, 163, 184, 0.15); /* subtle muted slate-400 */
+          background-color: rgba(148, 163, 184, 0.25); /* slate-400 with 25% opacity, matches image */
           pointer-events: none;
           will-change: transform;
         }

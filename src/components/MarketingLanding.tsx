@@ -78,26 +78,26 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
   const getCheekyPickupLine = (score: number) => {
     if (score >= 80) {
-      return `Outstanding ATS score of ${score}%! Your resume possesses high-caliber structure and keyword alignments. Let's polish the final details.`;
+      return `Wow, an ATS rating of ${score}%! Honestly, you're a major catch. Recruiters would be crazy to skip you. Let's make this official, marry your workspace already!`;
     }
     if (score >= 60) {
-      return `Solid rating of ${score}%! With minor corrections to your technical keywords and metric formatting, you'll easily stand out.`;
+      return `Ooh, ${score}%! Not bad at all, you definitely have some high-quality charm. With just a little polish, we'll have everyone chasing after you.`;
     }
     if (score >= 45) {
-      return `ATS Rating: ${score}%. Let's calibrate your experience phrasing and optimize your layout scannability to pass the initial screening.`;
+      return `Mmm, ${score}%... We need to talk. Your ex ignored your potential, let's not let hiring managers do the exact same thing to you. Let me fix you.`;
     }
-    return `ATS Rating: ${score}%. Your formatting structure requires optimization. Let's fix this layout immediately using our professional templates.`;
+    return `An ATS rating of ${score}%... Ouch. 💔 This is a critical SOS. But don't panic, your Jin is here to sweep you off your feet and fix this immediately!`;
   };
 
   const processUploadedFile = async (file: File) => {
     const extension = file.name.split('.').pop()?.toLowerCase();
     const validExtensions = ['pdf', 'docx', 'jpg', 'jpeg', 'png'];
     if (!validExtensions.includes(extension || '')) {
-      setUploadError('Invalid format. Please upload PDF, DOCX, or high-res JPG/PNG files.');
+      setUploadError('Wait, let\'s stay compatible! Please upload PDF, DOCX, or JPG/PNG image formats only.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File size limit is 10MB.');
+      setUploadError('That\'s a hefty document! Let\'s keep it under 10MB.');
       return;
     }
 
@@ -124,7 +124,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
       });
     } catch (err: any) {
       console.error(err);
-      setUploadError(err.message || 'The parser was unable to complete. Please check server logs.');
+      setUploadError(err.message || 'Parser is temporarily resting in its lamp. Ensure server is online!');
     } finally {
       setIsAnalyzing(false);
     }
@@ -140,17 +140,17 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
 
   // Raw Data Configs
   const faqData = [
-    { q: "How is Elevate different from standard LLMs like ChatGPT?", a: "Unlike general models that often hallucinate details or break scannable formatting, Elevate uses recruiter-vetted scoring metrics and custom-engineered Gemini API guidelines to safely restructure your content." },
-    { q: "Is my personal data protected?", a: "Yes. All resumes and user metadata are saved securely using local browser caching, sandboxed databases, and zero-third-party disclosure policies." },
-    { q: "What file formats does the analyzer accept?", a: "We support PDF, DOCX, and high-resolution image formats (JPG, PNG, JPEG) for scanning." },
-    { q: "Can I export my finished resume to PDF?", a: "Yes! Elevate provides a professional, single-click PDF exporter that perfectly aligns with ATS vertical grid scanning requirements." }
+    { q: "How is Elevate different from normal LLMs like ChatGPT?", a: "ChatGPT hallucinates achievements, messes up complex PDF parsing grids, and is blind to real ATS density parsing filters. Elevate uses deterministic recruiter-designed algorithms for scoring, and custom Gemini API guardrails to rewrite sections without hallucinating." },
+    { q: "Is my resume data secure?", a: "100% secure. Your resume information is cached entirely in your local browser instance via secure LocalStorage and we enforce robust, zero-third-party encrypted cloud sync policies." },
+    { q: "What resume formats do you support?", a: "We support PDF, DOCX, as well as JPG, PNG, and JPEG image resumes. We'll automatically extract metadata, structure it, and grade it instantly." },
+    { q: "Can I export my finished resume to PDF?", a: "Yes! Elevate features a lightning-fast, high-fidelity PDF exporter that matches exact standard recruiter formatting layout standards perfectly." }
   ];
 
   const testimonials = [
-    { name: 'Kylie J.', category: 'Students', company: 'Stanford University', quote: 'Elevate landed me my summer internship at Apple! The bullet point enhancement recommended exactly what technical keywords I was missing.', avatar: 'KJ' },
-    { name: 'Anish P.', category: 'Freshers', company: 'New Grad', quote: 'As a fresher, I had almost zero achievements on paper. Elevate helped me turn my basic university homework projects into quantified engineering highlights.', avatar: 'AP' },
-    { name: 'Devon C.', category: 'Software Engineers', company: 'Netflix', quote: 'The ATS compatibility checklist is magic. I got my resume up to a 95% rating and secured four tech interviews in two weeks.', avatar: 'DC' },
-    { name: 'Sarah M.', category: 'Recruiters', company: 'Google Partner', quote: 'We instantly reject resumes built with basic ChatGPT formatting because they clog up our ATS parsers. Resumes built with Elevate pass flawlessly.', avatar: 'SM' },
+    { name: 'Kylie Jen', category: 'Students', company: 'Stanford University', quote: 'Elevate landed me my summer internship at Apple! The bullet point enhancement recommended exactly what technical keywords I was missing.', avatar: 'KJ' },
+    { name: 'Anish Patil', category: 'Freshers', company: 'New Grad', quote: 'As a fresher, I had almost zero achievements on paper. Elevate helped me turn my basic university homework projects into quantified engineering highlights.', avatar: 'AP' },
+    { name: 'Devon Cole', category: 'Software Engineers', company: 'Netflix', quote: 'The ATS compatibility checklist is magic. I got my resume up to a 95% rating and secured four tech interviews in two weeks.', avatar: 'DC' },
+    { name: 'Sarah Miller', category: 'Recruiters', company: 'Google Partner', quote: 'We instantly reject resumes built with basic ChatGPT formatting because they clog up our ATS parsers. Resumes built with Elevate pass flawlessly.', avatar: 'SM' },
   ];
 
   const filteredTestimonials = activeTestimonialTab === 'All'
@@ -169,105 +169,101 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
   };
 
   const fadeInUpVariant = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 25 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { type: 'spring', stiffness: 80, damping: 20 }
+      transition: { type: 'spring', stiffness: 60, damping: 15 }
     }
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden bg-[#09090d] text-slate-200 transition-colors duration-300 font-sans">
+    <div className="relative min-h-screen flex flex-col justify-between overflow-x-hidden bg-[#05050C] text-slate-100 transition-colors duration-300 font-sans">
 
-      {/* Elegant Colorful Background (No Neon, Sophisticated) */}
+      {/* Cosmic Stars Dynamic Mesh */}
       <CanvasVisualizer intensity="high" reduceMotion={reduceMotion} />
 
-      {/* Header (Professional, Aesthetic Matte Finish with Deep Indigo & Amber Accents) */}
-      <header className="sticky top-0 z-50 w-full bg-[#09090d]/80 backdrop-blur-md border-b border-indigo-950/40 h-16 flex items-center justify-between px-4 sm:px-8">
-        <div className="flex items-center space-x-2 cursor-pointer">
-          <div className="p-1.5 bg-gradient-to-br from-indigo-700 to-indigo-500 rounded-lg text-white shrink-0 shadow-[0_1px_10px_rgba(79,70,229,0.3)]">
-            <Sparkles className="w-4 h-4 text-amber-200" />
+      {/* Header */}
+      <header className="sticky top-0 z-50 w-full bg-[#05050C]/75 backdrop-blur-2xl border-b border-white/5 h-18 flex items-center justify-between px-4 sm:px-6">
+        <div className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-xl text-white shadow-[0_0_15px_rgba(99,102,241,0.4)] shrink-0">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-200" />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-sm sm:text-base text-white tracking-tight">Elevate Resume</span>
-            <span className="text-[8px] font-semibold text-amber-400 uppercase tracking-widest">Premium Edition</span>
+            <span className="font-black text-sm sm:text-lg text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300 whitespace-nowrap">Elevate Resume</span>
+            <span className="text-[8px] sm:text-[10px] font-bold text-cyan-400 uppercase tracking-widest">Genie Edition</span>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <button onClick={onLogin} className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Sign In</button>
-          <button onClick={onGetStarted} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold text-[11px] sm:text-xs rounded-lg transition-all uppercase tracking-wider border border-indigo-500/20 shadow-[0_2px_12px_rgba(79,70,229,0.2)]">Build Resume</button>
+        <div className="flex items-center space-x-3 sm:space-x-5">
+          <button onClick={onLogin} className="text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition-colors">Sign In</button>
+          <button onClick={onGetStarted} className="px-3 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 text-white font-black text-[10px] sm:text-xs rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all uppercase tracking-wider">Build Workspace</button>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-grow space-y-16 sm:space-y-24 md:space-y-32 py-12 px-4 sm:px-8 max-w-7xl mx-auto w-full relative z-10 text-center">
+      <main className="flex-grow space-y-20 sm:space-y-28 md:space-y-36 py-10 sm:py-16 px-4 sm:px-6 max-w-7xl mx-auto w-full relative z-10 text-center">
 
         {/* SECTION 1: HERO */}
-        <section className="space-y-6 max-w-3xl mx-auto pt-2">
-          <div className="inline-flex items-center space-x-2 bg-indigo-950/40 text-indigo-300 px-3.5 py-1.5 rounded-full border border-indigo-900/40 text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest">
-            <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>AI Resume Builder • ATS Auditing • Job Tailoring</span>
+        <section className="space-y-6 sm:space-y-8 max-w-3xl mx-auto pt-4">
+          <div className="inline-flex items-center space-x-2 bg-indigo-950/40 text-indigo-300 px-3.5 py-1.5 rounded-full border border-indigo-500/30 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest animate-pulse max-w-full">
+            <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span className="truncate">AI Resume Builder • ATS Analyzer • Job Tailoring</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white leading-none tracking-tight">
             Elevate your career. <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 via-purple-300 to-amber-200">
-              Professional Grade.
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-pink-400 to-cyan-400 animate-gradient">
+              Outperform boring LLMs.
             </span>
           </h1>
 
-          {/* Large text description: Hidden or drastically shortened on mobile screens */}
-          <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed block sm:hidden font-light">
-            Elevate uses deterministic recruiter guidelines to structure, audit, and tailor your resume for top ATS matching.
-          </p>
-          <p className="text-sm sm:text-lg text-slate-300 font-light max-w-2xl mx-auto leading-relaxed hidden sm:block">
-            Stop pasting raw prompts into ChatGPT. Elevate combines <span className="text-amber-300 font-medium">deterministic recruiter rules</span> and custom-engineered Gemini optimization to audit, rate, and tailor your resume flawlessly.
+          <p className="text-sm sm:text-lg text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
+            Stop pasting raw prompts into ChatGPT. Elevate combines <span className="text-cyan-400 font-semibold">deterministic recruiter rules</span> and custom Gemini optimization to audit, rate, and tailor your resume flawlessly.
           </p>
 
-          <div className="pt-3 flex flex-col sm:flex-row justify-center items-center gap-3 max-w-xs sm:max-w-md mx-auto w-full">
-            <button onClick={onGetStarted} className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-amber-600 hover:from-indigo-500 hover:to-amber-500 text-white font-bold text-[11px] sm:text-xs rounded-lg shadow-lg shadow-indigo-950/50 uppercase tracking-wider flex items-center justify-center space-x-2 transition-all">
+          <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-3.5 max-w-md mx-auto w-full">
+            <button onClick={onGetStarted} className="w-full py-3.5 sm:py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-black text-[11px] sm:text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2">
               <span>Create Free Resume</span>
-              <ArrowRight className="w-4 h-4 text-white" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </section>
 
-        {/* Live Statistics Block - Simplified on mobile */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center max-w-4xl mx-auto">
-          <div className="p-4 bg-white/[0.02] border border-indigo-950/20 backdrop-blur-sm rounded-xl">
-            <p className="text-xl sm:text-2xl font-bold text-indigo-400">10K+</p>
-            <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Resumes Created</p>
+        {/* Live Statistics Block */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center max-w-4xl mx-auto">
+          <div className="p-4 sm:p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+            <p className="text-2xl sm:text-3xl font-black text-cyan-400">10K+</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Resumes Created</p>
           </div>
-          <div className="p-4 bg-white/[0.02] border border-indigo-950/20 backdrop-blur-sm rounded-xl">
-            <p className="text-xl sm:text-2xl font-bold text-amber-400">95%</p>
-            <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">ATS Accuracy</p>
+          <div className="p-4 sm:p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+            <p className="text-2xl sm:text-3xl font-black text-pink-400">95%</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">ATS Accuracy</p>
           </div>
-          <div className="p-4 bg-white/[0.02] border border-indigo-950/20 backdrop-blur-sm rounded-xl">
-            <p className="text-xl sm:text-2xl font-bold text-indigo-400">100+</p>
-            <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Templates Built</p>
+          <div className="p-4 sm:p-6 bg-white/5 border border-white/5 backdrop-blur-md rounded-2xl">
+            <p className="text-2xl sm:text-3xl font-black text-indigo-400">100+</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Templates Built</p>
           </div>
-          <div className="p-4 bg-indigo-950/[0.2] border border-indigo-900/30 rounded-xl">
-            <p className="text-xl sm:text-2xl font-bold text-amber-400">{counter}</p>
-            <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">AI Ratings Today</p>
+          <div className="p-4 sm:p-6 bg-[#0c0c1b] border border-cyan-500/10 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+            <p className="text-2xl sm:text-3xl font-black text-yellow-400">{counter}</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">AI Ratings Today</p>
           </div>
         </section>
 
         {/* SECTION FOR UPLOADING */}
-        <div id="dropzone-element" className="w-full max-w-xl mx-auto space-y-4">
+        <div id="dropzone-element" className="w-full max-w-2xl mx-auto space-y-6">
           <AnimatePresence mode="wait">
             {!analysisResult ? (
               <motion.div
                 key="dropzone"
-                className="relative rounded-2xl p-[1px] bg-gradient-to-r from-indigo-950/40 via-amber-950/20 to-indigo-950/40 hover:from-indigo-900/50 hover:to-indigo-900/50 transition-all duration-300"
+                className="relative rounded-3xl p-0.5 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-cyan-500/20 hover:from-indigo-500/40 transition-all duration-700"
               >
                 <div
                   onDragEnter={handleDrag}
                   onDragOver={handleDrag}
                   onDragLeave={handleDrag}
                   onDrop={handleDrop}
-                  className={`relative rounded-[15px] bg-[#0d0d12] p-6 sm:p-10 text-center transition-all ${
-                    dragActive ? 'bg-indigo-950/30' : ''
+                  className={`relative rounded-[22px] bg-[#0c0c16]/95 p-6 sm:p-10 md:p-14 text-center transition-all ${
+                    dragActive ? 'bg-[#0f0f22]/90' : ''
                   }`}
                 >
                   <input
@@ -279,26 +275,29 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                   />
 
                   {isAnalyzing ? (
-                    <div className="space-y-4 py-4 flex flex-col items-center">
-                      <div className="w-10 h-10 border-2 border-indigo-500 border-t-amber-400 rounded-full animate-spin" />
-                      <p className="text-xs font-semibold text-slate-300">Analyzing layout structure... No forms required.</p>
+                    <div className="space-y-6 py-6 flex flex-col items-center">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16">
+                        <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping" />
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-indigo-500 border-t-cyan-400 rounded-full animate-spin" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-black text-white">Genie is analyzing your scroll... No forms required!</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <UploadCloud className="w-8 h-8 text-indigo-400 mx-auto" />
-                      <div className="space-y-1">
-                        <h3 className="text-base sm:text-lg font-bold text-white">Drop your resume scroll here</h3>
-                        <p className="text-[10px] text-slate-400 max-w-xs mx-auto">Supports PDF, DOCX, and JPG/PNG resume formats.</p>
+                    <div className="space-y-6">
+                      <UploadCloud className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-400 mx-auto" />
+                      <div className="space-y-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-white">Drop your resume scroll here</h3>
+                        <p className="text-[11px] sm:text-xs text-slate-400 max-w-sm mx-auto">Supports PDF, DOCX, and JPG/PNG resume formats. Drag and drop to immediately see your rating.</p>
                       </div>
-                      <label htmlFor="frictionless-file-upload" className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-indigo-800 to-indigo-900 hover:from-indigo-750 hover:to-indigo-850 text-white text-xs font-semibold rounded-lg cursor-pointer transition-colors shadow-md">
+                      <label htmlFor="frictionless-file-upload" className="inline-flex items-center space-x-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-white hover:bg-slate-100 text-slate-900 text-xs font-black rounded-xl cursor-pointer shadow-lg uppercase tracking-wider">
                         <span>Select File</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-4 h-4" />
                       </label>
                     </div>
                   )}
 
                   {uploadError && (
-                    <div className="mt-4 p-2.5 bg-red-950/20 border border-red-900/30 text-red-300 text-xs rounded-lg flex items-center justify-center space-x-2">
+                    <div className="mt-4 p-3 bg-red-950/40 border border-red-500/30 text-red-300 text-xs rounded-xl flex items-center justify-center space-x-2">
                       <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                       <span>{uploadError}</span>
                     </div>
@@ -308,27 +307,56 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
             ) : (
               <motion.div
                 key="rating-card"
-                className="relative rounded-2xl p-[1px] bg-indigo-900/40 shadow-xl"
+                className="relative rounded-3xl p-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500 shadow-2xl"
               >
-                <div className="rounded-[15px] bg-[#0c0c10] p-6 sm:p-8 text-center space-y-4 relative overflow-hidden">
-                  <h3 className="text-base sm:text-lg font-bold text-white">Your Profile Rating</h3>
+                <div className="rounded-[22px] bg-[#0b0b14] p-6 sm:p-8 md:p-12 text-center space-y-6 sm:space-y-8 relative overflow-hidden">
+                  <h3 className="text-xl sm:text-2xl font-black text-white">Your Premium Profile Rating</h3>
                   <div className="flex justify-center">
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24">
+                    <div className="relative w-24 h-24 sm:w-32 sm:h-32">
                       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.03)" strokeWidth="6" />
-                        <circle cx="50" cy="50" r="40" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - analysisResult.score / 100)} strokeWidth="7" strokeLinecap="round" className="stroke-indigo-400" />
+                        <circle cx="50" cy="50" r="40" fill="transparent" strokeDasharray={2 * Math.PI * 40} strokeDashoffset={2 * Math.PI * 40 * (1 - analysisResult.score / 100)} strokeWidth="7" strokeLinecap="round" className="stroke-cyan-400" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-lg sm:text-xl font-extrabold text-white">{analysisResult.score}%</span>
-                        <span className="text-[7px] font-bold uppercase text-slate-500">ATS Match</span>
+                        <span className="text-2xl sm:text-3xl font-black text-white">{analysisResult.score}%</span>
+                        <span className="text-[7px] sm:text-[8px] font-bold uppercase text-slate-400">Match Aura</span>
                       </div>
                     </div>
                   </div>
-                  <div className="max-w-sm mx-auto p-3 bg-indigo-950/20 border border-indigo-900/20 rounded-lg">
-                    <p className="text-xs text-slate-300 leading-relaxed font-light">"{analysisResult.pickupLine}"</p>
+
+                  <div className="max-w-md mx-auto p-3.5 sm:p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    <p className="text-xs text-slate-200 leading-relaxed font-medium">"{analysisResult.pickupLine}"</p>
                   </div>
-                  <button onClick={claimWorkspace} className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-amber-600 text-white font-bold text-xs rounded-lg transition-colors flex items-center justify-center space-x-1.5 mx-auto uppercase tracking-wide">
-                    <span>Claim Workspace & Fix Resume</span>
+
+                  {/* Locked Recruiter Diagnostic Preview */}
+                  <div className="relative border border-white/5 bg-white/[0.01] rounded-2xl p-6 overflow-hidden">
+                    {/* Blurry report blocks */}
+                    <div className="filter blur-[5px] select-none pointer-events-none space-y-4 text-left">
+                      <div>
+                        <span className="text-xxs font-bold text-red-400 uppercase">⚠️ Recruiter Rejection Risk (Critical)</span>
+                        <p className="text-xs text-slate-300 mt-1">This resume is at high risk of automatic rejection because of passive phrasing and non-ATS compliant section headings...</p>
+                      </div>
+                      <div className="h-px bg-white/5" />
+                      <div>
+                        <span className="text-xxs font-bold text-amber-400 uppercase">🔍 Found 14 Red-flag Buzzwords</span>
+                        <p className="text-xs text-slate-300 mt-1">Found words like "dynamic", "motivated", "detail-oriented" which weaken impact. Passive phrasing identified in experience section...</p>
+                      </div>
+                    </div>
+
+                    {/* Locking Glassmorphic Overlay */}
+                    <div className="absolute inset-0 bg-[#0b0b14]/75 backdrop-blur-sm flex flex-col items-center justify-center p-4">
+                      <div className="p-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-400 mb-2.5">
+                        <Shield className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-extrabold text-white">Recruiter Report Locked</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                        To protect privacy and unlock the full breakdown of rejection reasons, missing skills, and improvement advice, please log in first.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button onClick={claimWorkspace} className="w-full sm:w-auto px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-black text-xs rounded-xl shadow-xl uppercase tracking-wider flex items-center justify-center space-x-2 mx-auto">
+                    <span>Create Account & Unlock Full Report</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -343,43 +371,42 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
             PREMIUM GLASSMORPHIC BACKDROP BLURS, AND viewport={{ once: true }} SCROLL ANIMATIONS
             ========================================================================= */}
 
-        {/* SECTION 2: CORE FEATURES - Text and cards heavily pruned on mobile screens */}
+        {/* SECTION 2: CORE FEATURES */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-8"
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Built for Perfection</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">Core Platform Features</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Built for Perfection</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Core Platform Features</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 text-left">
             {[
-              { icon: Cpu, title: "🤖 AI Resume Builder", desc: "Interactive workspace to construct beautiful, robust, section-perfect resumes." },
-              { icon: FileText, title: "📄 Resume Analyzer", desc: "Automated parser auditing checking layout scannability and structure." },
-              { icon: Target, title: "🎯 ATS Checker", desc: "Verify formatting consistency, missing keywords, and recruiter metrics." },
-              { icon: ListFilter, title: "🔍 JD Matcher", desc: "Compare against target jobs and get instant, accurate gap feedback." },
-              // Rest of features are only rendered on desktop to avoid text overload / "dumb game" feel on mobile
-              { icon: Sparkles, title: "✨ Bullet Point Enhancer", desc: "Transform passive items into quantified achievements.", desktopOnly: true },
-              { icon: FileUp, title: "📝 Summary Generator", desc: "Assemble professional summary statements in seconds.", desktopOnly: true },
-              { icon: Award, title: "📈 Scoring Index", desc: "Determine alignment mathematically using recruiter parameters.", desktopOnly: true },
-              { icon: ArrowRight, title: "📤 PDF Exporter", desc: "Single-click high-fidelity layout export optimized for screeners.", desktopOnly: true }
+              { icon: Cpu, title: "🤖 AI Resume Builder", desc: "Interactive workspace powered by Gemini API to construct beautiful, robust, section-perfect resumes." },
+              { icon: FileText, title: "📄 Resume Analyzer", desc: "Automated parser auditing that checks formatting grids, keyword density indexes, and grammar alignment." },
+              { icon: Target, title: "🎯 ATS Checker", desc: "Verify formatting consistency, missing technical keywords, and structural requirements instantly." },
+              { icon: ListFilter, title: "🔍 JD Matcher", desc: "Paste any target job description and get immediate, itemized technical skill-gap feedback." },
+              { icon: Sparkles, title: "✨ AI Content Enhancer", desc: "Transform passive sentences into highly punchy, results-focused quantified achievements." },
+              { icon: FileUp, title: "📝 Summary Generator", desc: "Generate premium professional summary profiles optimized with action verbs in seconds." },
+              { icon: Award, title: "📈 Resume Score", desc: "Get an analytical 0-100 score detailing exactly how aligned you are with hiring standards." },
+              { icon: ArrowRight, title: "📤 PDF Export", desc: "High-fidelity single-click export optimized for applicant tracking scanners." }
             ].map((feat, idx) => {
               const Icon = feat.icon;
               return (
                 <motion.div
                   key={idx}
                   variants={fadeInUpVariant}
-                  className={`p-5 rounded-xl bg-white/[0.01] border border-indigo-950/20 space-y-3 hover:border-indigo-800/40 transition-all duration-300 ${feat.desktopOnly ? 'hidden sm:block' : ''}`}
+                  className="p-5 sm:p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl space-y-3.5 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300"
                 >
-                  <div className="w-8 h-8 bg-indigo-950/40 rounded-lg flex items-center justify-center text-indigo-300">
-                    <Icon className="w-4 h-4" />
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-indigo-500/10 rounded-xl flex items-center justify-center text-cyan-400">
+                    <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
                   </div>
-                  <h4 className="text-xs sm:text-sm font-bold text-white">{feat.title}</h4>
-                  <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed font-light">{feat.desc}</p>
+                  <h4 className="text-sm sm:text-base font-bold text-white">{feat.title}</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">{feat.desc}</p>
                 </motion.div>
               );
             })}
@@ -392,22 +419,22 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-6"
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Aesthetic layouts</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">Recruiter-Approved Templates</h2>
-            <p className="text-[11px] sm:text-xs text-slate-400 max-w-sm mx-auto">Explore clean layout designs formatted exactly for corporate screening standards.</p>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Aesthetic layouts</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Recruiter-Approved Templates</h2>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto">Explore premium grid options optimized for top applicant tracking algorithms.</p>
           </div>
 
-          {/* Selector tabs - responsive compact scroll */}
-          <div className="flex flex-wrap justify-center gap-1 max-w-md mx-auto bg-white/[0.02] p-1 rounded-lg">
+          {/* Selector tabs */}
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mx-auto bg-white/5 p-1 rounded-xl">
             {templatesList.map((t) => (
               <button
                 key={t}
                 onClick={() => setActiveTemplate(t)}
-                className={`px-3 py-1 rounded-md text-[9px] sm:text-xs font-bold uppercase transition-all ${
-                  activeTemplate === t ? 'bg-indigo-650 text-white shadow' : 'text-slate-500 hover:text-white'
+                className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${
+                  activeTemplate === t ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {t}
@@ -418,28 +445,26 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           {/* Template Live Preview Area */}
           <motion.div
             variants={fadeInUpVariant}
-            className="max-w-xl mx-auto rounded-xl bg-[#0c0c12] border border-indigo-950/30 shadow-lg overflow-hidden p-4 sm:p-6 text-left space-y-4 hover:border-indigo-800 transition-all duration-300"
+            className="max-w-2xl mx-auto rounded-2xl bg-[#0c0c16]/70 border border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden p-5 sm:p-8 text-left space-y-4 sm:space-y-5 hover:border-cyan-500/30 transition-all duration-300"
           >
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <div className="flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-indigo-900" />
-                <span className="w-2 h-2 rounded-full bg-indigo-850" />
-                <span className="w-2 h-2 rounded-full bg-amber-800" />
+            <div className="flex justify-between items-center border-b border-white/5 pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
               </div>
-              <span className="text-[9px] sm:text-xs font-bold text-indigo-400 uppercase tracking-widest">{activeTemplate} Layout</span>
+              <span className="text-[10px] sm:text-xs font-bold text-indigo-400 uppercase tracking-widest">{activeTemplate} Layout Preview</span>
             </div>
 
-            <div className="space-y-3 text-[10px] sm:text-xs font-mono text-slate-300">
-              <p className="text-xs sm:text-sm text-white font-sans font-bold">Alex Mercer • Software Engineer</p>
-              <div className="h-[1px] bg-white/5" />
-              <p className="font-sans leading-relaxed text-[11px] sm:text-xs font-light">Driven engineer with hands-on expertise building cloud-native SaaS systems using React, TypeScript, and Node.</p>
-
-              {/* Extra details hidden on mobile to avoid text overload */}
-              <div className="space-y-2 font-sans hidden sm:block">
-                <p className="text-indigo-300 font-bold uppercase tracking-wider text-[9px] sm:text-[10px]">Technical Skills</p>
+            <div className="space-y-3.5 text-xxs sm:text-xs font-mono text-slate-300">
+              <p className="text-xs sm:text-sm text-white font-sans font-black">Alex Mercer • Software Engineer</p>
+              <div className="h-px bg-white/10" />
+              <p className="font-sans leading-relaxed text-xs sm:text-sm"><strong>Professional Summary:</strong> Driven engineer with hands-on expertise building cloud-native SaaS systems using React, TypeScript, and Docker.</p>
+              <div className="space-y-2 font-sans">
+                <p className="text-white font-bold uppercase tracking-wider text-[9px] sm:text-[10px]">Technical Skills</p>
                 <div className="flex flex-wrap gap-1.5">
                   {['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'].map((sk) => (
-                    <span key={sk} className="px-2 py-0.5 bg-indigo-950/20 rounded border border-indigo-900/40 text-[8px] sm:text-[9px] font-medium text-amber-200">{sk}</span>
+                    <span key={sk} className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-white/5 rounded border border-white/10 text-[8px] sm:text-[9px] font-medium text-slate-200">{sk}</span>
                   ))}
                 </div>
               </div>
@@ -447,158 +472,162 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           </motion.div>
         </motion.section>
 
-        {/* SECTION 4: AI CAPABILITIES - Substantially simplified/hidden on mobile */}
+        {/* SECTION 4: AI CAPABILITIES */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-8 hidden sm:block" // Hidden completely on mobile to prevent "dumb game" text fatigue
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Intelligent Engine</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">AI Optimization Suite</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Intelligent Engine</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">AI Capabilities</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 text-left max-w-4xl mx-auto">
             {[
-              { title: "Bullet Point Calibration", desc: "Upgrades passive phrases with strong recruiter-approved action verbs and quantified impact metrics." },
-              { title: "Syntactical Alignment", desc: "Ensures flawless professional business writing syntax with perfect passive-active transitions." },
-              { title: "Achievement Quantifier", desc: "Brainstorms and quantifies custom achievements based on your target level and tech stack." }
+              { title: "Bullet Point Enhancement", desc: "Upgrades passive phrases with strong recruiter-approved action verbs and quantified impact metrics." },
+              { title: "Grammar Correction", desc: "Ensures flawless professional business writing syntax with perfect passive-active transitions." },
+              { title: "Achievement Generator", desc: "Brainstorms and quantifies custom achievements based on your target level and tech stack." },
+              { title: "Resume Rewrite", desc: "Polishes entire sections into refined, premium layouts matching executive prose style." },
+              { title: "Keyword Optimization", desc: "Embeds target skills seamlessly within summaries and experience items for high parsing rates." },
+              { title: "Professional Summary Generator", desc: "Assembles compelling summary highlights from customized role inputs instantly." }
             ].map((cap, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeInUpVariant}
-                className="p-5 rounded-xl bg-white/[0.01] border border-indigo-950/20 hover:border-indigo-800 transition-all duration-300"
+                className="p-5 sm:p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
               >
-                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">{cap.title}</h4>
-                <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed font-light">{cap.desc}</p>
+                <h4 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider mb-2 text-cyan-300">{cap.title}</h4>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">{cap.desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.section>
 
-        {/* SECTION 5: ATS INTELLIGENCE - Compact on mobile */}
+        {/* SECTION 5: ATS INTELLIGENCE */}
         <motion.section
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="p-5 sm:p-8 rounded-xl bg-[#0b0b14] border border-indigo-950/20 text-left max-w-4xl mx-auto space-y-4 shadow-[0_2px_20px_rgba(79,70,229,0.05)]"
+          transition={{ duration: 0.5 }}
+          className="p-5 sm:p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-white/10 backdrop-blur-2xl text-left max-w-4xl mx-auto space-y-6 sm:space-y-8 shadow-[0_8px_32px_0_rgba(6,182,212,0.05)]"
         >
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Auditing System</span>
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">ATS Intelligence Checks</h3>
+          <div className="space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Scan Metrics</span>
+            <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white">ATS Intelligence Radar</h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-light">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-slate-200 text-xs sm:text-sm font-light">
             {[
-              { label: "Scannability Rating", desc: "Mathematical compatibility assessment based on scanning rules." },
-              { label: "Keyword Density Check", desc: "Audit technical keyword density matches for target roles." },
-              { label: "Structural Validation", desc: "Validate columns, margins, grids, and font scannability." },
-              // Render only 3 checks on mobile, remaining 3 on tablet/desktop to reduce density
-              { label: "Readability Index", desc: "Analyze sentence complexity and grammatical pacing.", desktopOnly: true },
-              { label: "Typography Verification", desc: "Deep syntax scans preventing parsing rejections.", desktopOnly: true },
-              { label: "Completeness Audit", desc: "Verify essential coordinates and profile sections.", desktopOnly: true }
+              { label: "ATS Score Rating", desc: "Deterministic compatibility assessment based on scanning standards." },
+              { label: "Missing Keywords Check", desc: "Audit technical keyword density matches for targeted roles." },
+              { label: "Formatting Analysis", desc: "Validate columns, tables, grids, and font-scannability." },
+              { label: "Readability Index Score", desc: "Analyze sentence length, simplicity, and flow of experience items." },
+              { label: "Grammar Check Check", desc: "Deep grammar scan preventing minor typographic rejections." },
+              { label: "Section Completeness Check", desc: "Verify essential candidate contact info and coordinate structures." }
             ].map((item, idx) => (
-              <div key={idx} className={`space-y-1 border-l-2 border-indigo-900/60 pl-3 py-0.5 ${item.desktopOnly ? 'hidden sm:block' : ''}`}>
-                <p className="font-bold text-white text-xs">{item.label}</p>
-                <p className="text-slate-400 leading-normal text-[10px] sm:text-xs">{item.desc}</p>
+              <div key={idx} className="space-y-1.5 border-l-2 border-indigo-500/30 pl-3.5 py-1">
+                <p className="font-bold text-white text-xs sm:text-sm">{item.label}</p>
+                <p className="text-slate-300 leading-relaxed text-[11px] sm:text-xs">{item.desc}</p>
               </div>
             ))}
           </div>
         </motion.section>
 
-        {/* SECTION 6: JOB MATCH ANALYSIS - Reduced on mobile */}
+        {/* SECTION 6: JOB MATCH ANALYSIS */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-6"
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Alignment Index</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">Job Match Metrics</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Alignment Analytics</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Job Match Analysis</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3 max-w-5xl mx-auto text-left">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 text-left max-w-5xl mx-auto">
             {[
-              { title: "Direct Match %", val: "92%", desc: "Direct compatibility matching skills with the JD." },
-              { title: "Missing Elements", val: "TypeScript • AWS", desc: "Identifies hard skill-gaps immediately." },
-              { title: "Keyword Count", val: "8 / 10", desc: "Evaluates key frequencies for high parsing scores." },
-              // Hide on mobile
-              { title: "Seniority Match", val: "Mid Level", desc: "Maps experience metrics with targets.", desktopOnly: true },
-              { title: "Improvement Plan", val: "5 Steps", desc: "Clear recommendations to refine bullet phrasing.", desktopOnly: true }
+              { title: "Match Percentage", val: "92%", desc: "Direct compatibility score matching skills to JD requirements." },
+              { title: "Missing Skills", val: "TypeScript • AWS", desc: "Pinpoints exactly which hard technical requirements are missing." },
+              { title: "Required Keywords", val: "8 / 10", desc: "Evaluates keyword frequency match for high ATS scoring potential." },
+              { title: "Experience Gap", val: "Junior level Match", desc: "Analytically maps seniority criteria with your resume milestones." },
+              { title: "Suggested Improvements", val: "5 action recommendations", desc: "Actionable, step-by-step guidance to adapt phrasing." }
             ].map((gap, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeInUpVariant}
-                className={`p-4 rounded-lg bg-[#0c0c14] border border-indigo-950/30 flex flex-col justify-between hover:border-indigo-800 transition-all duration-300 ${gap.desktopOnly ? 'hidden sm:flex' : ''}`}
+                className="p-4 sm:p-5 rounded-xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl flex flex-col justify-between hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.05)] transition-all duration-300"
               >
                 <div>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-indigo-400 uppercase tracking-widest leading-none">{gap.title}</span>
-                  <p className="text-base sm:text-lg font-bold text-amber-400 mt-1">{gap.val}</p>
+                  <span className="text-[10px] sm:text-xs font-bold text-indigo-400 uppercase tracking-widest leading-none">{gap.title}</span>
+                  <p className="text-base sm:text-xl font-black text-white mt-1.5">{gap.val}</p>
                 </div>
-                <p className="text-[10px] sm:text-xs text-slate-400 mt-2.5 leading-normal font-light">{gap.desc}</p>
+                <p className="text-[11px] sm:text-xs text-slate-300 mt-3.5 leading-normal font-light">{gap.desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.section>
 
-        {/* SECTION 7: WHY CHOOSE US - Hidden on mobile */}
+        {/* SECTION 7: WHY CHOOSE US */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-8 hidden sm:block" // Hidden on mobile to avoid text fatigue
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-2">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Why Choose Us</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">The Professional Difference</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Unrivaled Excellence</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Why Choose Our Platform</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 text-left">
             {[
-              { title: "Deterministic Validation", desc: "Engineered around standard recruitment parser models, ensuring no arbitrary formatting errors." },
-              { title: "Secure Cloud Syncing", desc: "Encrypted sync mechanisms alongside complete local browser storage persistence." },
-              { title: "Frictionless Export", desc: "Single-click vertical scannable export with professional font rendering." }
+              { title: "AI Powered", desc: "Advanced Gemini model integration offering zero-hallucination, high-fidelity advice." },
+              { title: "ATS Optimized", desc: "Engineered around deterministic recruiter-tested grading structures." },
+              { title: "Recruiter Approved Templates", desc: "Stunning minimalist layouts designed to catch any hiring manager's eye." },
+              { title: "Multiple Resume Versions", desc: "Build, duplicate, and tailor as many active resume versions as you need." },
+              { title: "Secure Cloud Storage", desc: "Encrypted local browser persistence alongside premium sync safeguards." },
+              { title: "Fast PDF Export", desc: "Export high-resolution scannable PDF documents instantly in one click." }
             ].map((choose, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeInUpVariant}
-                className="p-5 rounded-xl bg-white/[0.01] border border-indigo-950/20 hover:border-indigo-800 transition-colors"
+                className="p-5 sm:p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(99,102,241,0.1)] transition-all duration-300"
               >
-                <Check className="w-4 h-4 text-amber-400 mb-2" />
-                <h4 className="text-xs sm:text-sm font-bold text-white mb-1">{choose.title}</h4>
-                <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed font-light">{choose.desc}</p>
+                <Check className="w-5 h-5 text-cyan-400 mb-2.5" />
+                <h4 className="text-sm sm:text-base font-bold text-white mb-1.5">{choose.title}</h4>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">{choose.desc}</p>
               </motion.div>
             ))}
           </div>
         </motion.section>
 
-        {/* SECTION 9: TESTIMONIALS - Pruned on mobile */}
+        {/* SECTION 9: TESTIMONIALS */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="space-y-6"
+          className="space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">User success</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">Real success stories</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">User success</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Real success stories</h2>
           </div>
 
-          {/* Tab Selector - Hide selector tab bar on mobile, just show all/all filtered neatly */}
-          <div className="hidden sm:flex flex-wrap justify-center gap-1 max-w-md mx-auto bg-white/[0.02] p-1 rounded-lg">
+          {/* Tab Selector */}
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mx-auto bg-white/5 p-1 rounded-xl">
             {testimonialTabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTestimonialTab(tab)}
-                className={`px-3 py-1 rounded-md text-[9px] sm:text-xs font-bold uppercase transition-all ${
-                  activeTestimonialTab === tab ? 'bg-indigo-700 text-white shadow' : 'text-slate-500 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg text-[10px] sm:text-xs font-black uppercase transition-all ${
+                  activeTestimonialTab === tab ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
                 {tab}
@@ -606,95 +635,84 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
             ))}
           </div>
 
-          {/* Testimonials Filtered Output - Only show 1 item on mobile to save space */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-2xl mx-auto text-left">
+          {/* Testimonials Filtered Output */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 max-w-3xl mx-auto text-left">
             <AnimatePresence mode="popLayout">
-              {filteredTestimonials.slice(0, 1).map((t) => (
-                <div
+              {filteredTestimonials.map((t, idx) => (
+                <motion.div
                   key={t.name}
-                  className="p-4 rounded-xl bg-[#0c0c14] border border-indigo-950/20 space-y-3"
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-5 sm:p-6 rounded-2xl bg-[#0c0c16]/50 border border-white/10 backdrop-blur-xl space-y-3.5 hover:border-indigo-500/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all duration-300"
                 >
-                  <p className="text-[11px] sm:text-xs text-slate-300 italic leading-relaxed font-light">"{t.quote}"</p>
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-7 h-7 rounded-full bg-indigo-950 flex items-center justify-center font-bold text-[10px] text-white shrink-0 border border-indigo-900/40">{t.avatar}</div>
+                  <p className="text-xs sm:text-sm text-slate-200 italic leading-relaxed font-light">"{t.quote}"</p>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white shrink-0">{t.avatar}</div>
                     <div>
-                      <h4 className="text-[10px] sm:text-xs font-bold text-white">{t.name}</h4>
-                      <p className="text-[9px] sm:text-[10px] text-indigo-400">{t.category} • <span className="text-slate-400 font-medium">{t.company}</span></p>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">{t.name}</h4>
+                      <p className="text-[10px] sm:text-xs text-slate-300">{t.category} at <span className="text-cyan-400 font-semibold">{t.company}</span></p>
                     </div>
                   </div>
-                </div>
-              ))}
-              {/* Show second testimonial only on tablet/desktop */}
-              {filteredTestimonials.slice(1, 2).map((t) => (
-                <div
-                  key={t.name}
-                  className="p-4 rounded-xl bg-[#0c0c14] border border-indigo-950/20 space-y-3 hidden sm:block"
-                >
-                  <p className="text-[11px] sm:text-xs text-slate-300 italic leading-relaxed font-light">"{t.quote}"</p>
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-7 h-7 rounded-full bg-indigo-950 flex items-center justify-center font-bold text-[10px] text-white shrink-0 border border-indigo-900/40">{t.avatar}</div>
-                    <div>
-                      <h4 className="text-[10px] sm:text-xs font-bold text-white">{t.name}</h4>
-                      <p className="text-[9px] sm:text-[10px] text-indigo-400">{t.category} • <span className="text-slate-400 font-medium">{t.company}</span></p>
-                    </div>
-                  </div>
-                </div>
+                </motion.div>
               ))}
             </AnimatePresence>
           </div>
         </motion.section>
 
-        {/* OPTIONAL WOW: WHY RECRUITERS PREFER ATS-FRIENDLY - Pruned drastically on mobile */}
+        {/* OPTIONAL WOW: WHY RECRUITERS PREFER ATS-FRIENDLY */}
         <motion.section
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="p-5 sm:p-8 rounded-xl bg-[#0c0c14] border border-indigo-950/35 text-left max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 items-center shadow-lg"
+          transition={{ duration: 0.5 }}
+          className="p-5 sm:p-8 md:p-12 rounded-3xl bg-[#0c0c16]/60 border border-indigo-500/20 backdrop-blur-2xl text-left max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 items-center shadow-2xl"
         >
-          <div className="space-y-2">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Recruiter perspective</span>
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Why scannable layouts are mandatory</h3>
-            <p className="text-[11px] sm:text-xs text-slate-400 leading-relaxed font-light">
-              Hiring staff read over 300 resumes per day. Over 90% of Fortune 500 organizations use parsing software. Graphic charts, multi-column divisions, and complex fonts automatically get flagged as unreadable.
+          <div className="space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Recruiter perspective</span>
+            <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white">Why recruiters demand ATS-Friendly layouts</h3>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-light">
+              Recruiters read over 300 resumes per day. Over 90% of Fortune 500 companies run initial candidates through parsing engines. If your layout features multiple columns, custom graphs, or illegible fonts, you are rejected before a human even lays eyes on your profile.
             </p>
           </div>
-          <div className="p-4 bg-[#07070b] rounded-lg border border-indigo-950/40 space-y-2.5 font-mono text-[10px] sm:text-xs text-slate-400 w-full overflow-x-auto">
-            <p className="text-white font-bold text-xxs uppercase">Verification Checklist</p>
-            <ul className="space-y-1.5">
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" /><span className="text-xxs">Scannable, clean experience item structure</span></li>
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" /><span className="text-xxs">No tables, custom canvas bars, or graphic stars</span></li>
-              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" /><span className="text-xxs">Standard, legible contact coordinate fields</span></li>
+          <div className="p-4 sm:p-6 bg-[#05050C]/80 rounded-2xl border border-white/10 backdrop-blur-xl space-y-3 font-mono text-[11px] sm:text-xs text-slate-300 w-full overflow-x-auto">
+            <p className="text-white font-bold text-xs uppercase">Scan Checklist</p>
+            <ul className="space-y-2 min-w-[220px]">
+              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 shrink-0" /><span className="text-xs">Scannable Experience bullet points</span></li>
+              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 shrink-0" /><span className="text-xs">Zero tables, graphs, or graphic stars</span></li>
+              <li className="flex items-center space-x-2"><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 shrink-0" /><span className="text-xs">Parsed contactCoordinates structure</span></li>
             </ul>
           </div>
         </motion.section>
 
-        {/* SECTION 10: FAQ - Pruned on mobile */}
+        {/* SECTION 10: FAQ */}
         <motion.section
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
           variants={staggerContainer}
-          className="max-w-2xl mx-auto space-y-6 hidden sm:block" // Hidden on mobile to keep things clean and aesthetic
+          className="max-w-3xl mx-auto space-y-10 sm:space-y-14"
         >
-          <div className="text-center space-y-1">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Clarifications</span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold text-white">Frequently Asked Questions</h2>
+          <div className="text-center space-y-3">
+            <span className="text-xs sm:text-sm font-black text-cyan-400 uppercase tracking-widest">Clarifications</span>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white">Frequently Asked Questions</h2>
           </div>
 
-          <div className="space-y-2.5 text-left">
+          <div className="space-y-3 text-left">
             {faqData.map((faq, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeInUpVariant}
-                className="p-3.5 rounded-lg bg-white/[0.01] border border-indigo-950/20 transition-all duration-300"
+                className="p-4 rounded-xl bg-[#0c0c16]/30 border border-white/5 backdrop-blur-xl transition-all duration-300 hover:border-indigo-500/20 mb-3"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full flex justify-between items-center py-1 text-xs font-bold text-white hover:text-indigo-300 focus:outline-none"
+                  className="w-full flex justify-between items-center py-2 text-xs sm:text-sm font-bold text-white hover:text-cyan-400 transition-colors focus:outline-none"
                 >
                   <span className="pr-4">{faq.q}</span>
-                  <span className="text-slate-500 text-xs shrink-0">{openFaq === idx ? '−' : '+'}</span>
+                  <span className="text-slate-400 text-base shrink-0">{openFaq === idx ? '−' : '+'}</span>
                 </button>
                 <AnimatePresence>
                   {openFaq === idx && (
@@ -702,7 +720,7 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="text-slate-400 text-xs font-light leading-relaxed mt-2 overflow-hidden"
+                      className="text-slate-300 text-xs sm:text-sm font-light leading-relaxed mt-2 overflow-hidden pl-1"
                     >
                       {faq.a}
                     </motion.div>
@@ -713,91 +731,94 @@ export default function MarketingLanding({ onGetStarted, onLogin, onInstantResum
           </div>
         </motion.section>
 
-        {/* SUPPORTED JOB ROLES SECTION - Simplified compact on mobile */}
-        <section className="space-y-4">
-          <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Perfectly calibrated for top industry sectors</p>
-          <div className="flex flex-wrap justify-center gap-1.5 max-w-lg mx-auto">
-            {['Software Engineering', 'Data Analytics', 'Product Management', 'Finance & Ops', 'Product Design'].map((role) => (
-              <span key={role} className="px-2.5 py-1 rounded-full bg-indigo-950/20 border border-indigo-900/35 text-[9px] sm:text-xs text-amber-250 cursor-default whitespace-nowrap">{role}</span>
+        {/* SUPPORTED JOB ROLES SECTION */}
+        <section className="space-y-6">
+          <p className="text-xs sm:text-sm font-black text-slate-500 uppercase tracking-wider">Perfectly catering to top industry paths</p>
+          <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
+            {['Software Engineer', 'Data Analyst', 'Product Manager', 'Mechanical Engineer', 'Business Analyst', 'Financial Consultant', 'Creative Director', 'Sales Executive'].map((role) => (
+              <span key={role} className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] sm:text-xs font-bold text-slate-200 hover:text-white hover:bg-indigo-500/10 hover:border-indigo-500/25 transition-colors cursor-default whitespace-nowrap">{role}</span>
             ))}
           </div>
         </section>
 
         {/* SECTION 11: FINAL CALL TO ACTION */}
         <motion.section
-          initial={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.3 }}
-          className="p-6 sm:p-10 md:p-14 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-[#0c0c12] to-indigo-950/40 border border-indigo-950/40 text-center max-w-3xl mx-auto space-y-6 relative overflow-hidden"
+          transition={{ duration: 0.4 }}
+          className="p-6 sm:p-12 md:p-16 rounded-3xl bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-cyan-950/60 border border-indigo-500/30 backdrop-blur-2xl text-center max-w-4xl mx-auto space-y-6 sm:space-y-8 relative overflow-hidden shadow-2xl"
         >
-          <div className="space-y-2">
-            <h2 className="text-xl sm:text-3xl md:text-5xl font-extrabold text-white leading-tight">Upgrade your matching coordinates today.</h2>
-            <p className="text-[10px] sm:text-xs text-slate-400 max-w-xs sm:max-w-md mx-auto leading-relaxed">Initialize your luxury-grade workspace, calibrate formatting patterns, and satisfy critical scanning indices.</p>
+          <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-3 sm:space-y-4">
+            <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white leading-tight">Upgrade your career match today.</h2>
+            <p className="text-xs sm:text-sm text-slate-200 max-w-md mx-auto leading-relaxed">Claim your luxury-grade workspace, fix layout formatting errors, and maximize ATS scanning compatibility indices.</p>
           </div>
-          <button onClick={onGetStarted} className="px-5 py-2.5 sm:px-6 sm:py-3.5 bg-gradient-to-r from-indigo-600 to-amber-600 text-white font-bold text-xs rounded-lg transition-all uppercase tracking-wider inline-flex items-center space-x-1.5 shadow-md shadow-indigo-950/50">
+          <button onClick={onGetStarted} className="px-6 py-3 sm:px-8 sm:py-4 bg-white hover:bg-slate-100 text-slate-900 font-black text-xs sm:text-sm rounded-xl shadow-xl uppercase tracking-wider inline-flex items-center space-x-2">
             <span>Start Workspace Free</span>
-            <ArrowRight className="w-4 h-4 text-white" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </motion.section>
 
       </main>
 
-      {/* Floating Aladdin Genie Widget - Pure Aesthetic Decoration (No Neon Glows) */}
+      {/* Floating Aladdin Genie Widget - Pure Aesthetic Decoration */}
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
-        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#0c0c14] rounded-full border border-indigo-950 shadow-lg relative overflow-hidden shrink-0 flex items-center justify-center">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-tr from-[#0b0b14] to-[#12122b] rounded-full border border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.3)] relative overflow-hidden shrink-0">
           <AladdinBot />
         </div>
       </div>
 
       {/* SECTION 12: DETAILED PREMIUM FOOTER */}
-      <footer className="w-full bg-[#050508] border-t border-indigo-950/30 py-10 sm:py-14 px-4 sm:px-8 relative z-10 text-[10px] sm:text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-6 mb-8 text-left">
+      <footer className="w-full bg-[#030308] border-t border-white/5 py-12 sm:py-16 px-4 sm:px-6 relative z-10 text-[11px] sm:text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8 mb-12 text-left">
 
-          <div className="col-span-2 space-y-3 pr-4">
+          <div className="col-span-2 space-y-4 pr-4">
             <div className="flex items-center space-x-2">
-              <div className="p-1 bg-indigo-950 border border-indigo-900/40 rounded-md text-white shrink-0">
-                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+              <div className="p-1.5 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg text-white shadow-sm shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
-              <span className="font-bold text-xs text-white uppercase tracking-wider">Elevate Resume</span>
+              <span className="font-extrabold text-xs sm:text-sm text-white uppercase tracking-wider">Elevate Resume</span>
             </div>
             <p className="text-slate-400 leading-relaxed font-light">
-              Crafting premium ATS-optimized scannable resumes with deterministic recruiter algorithms and secure zero-third-party cloud sync.
+              Crafting premium ATS-optimized scannable resumes with deterministic recruiter algorithms and secure zero-hallucination guardrails.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[10px]">Product</h4>
-            <ul className="space-y-1.5 font-medium">
-              <li><a href="#" className="hover:text-amber-400 transition-colors">AI Builder</a></li>
-              <li><a href="#" className="hover:text-amber-400 transition-colors">ATS Analyzer</a></li>
-              <li><a href="#" className="hover:text-amber-400 transition-colors">JD Matcher</a></li>
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase tracking-wider text-xs">Product</h4>
+            <ul className="space-y-2 font-medium">
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">AI Resume Builder</a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">ATS Analyzer</a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">Job Matcher</a></li>
             </ul>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[10px]">Resources</h4>
-            <ul className="space-y-1.5 font-medium font-light">
-              <li><a href="#" className="hover:text-amber-400 transition-colors">Templates</a></li>
-              <li><a href="#" className="hover:text-amber-400 transition-colors">Scan Rules</a></li>
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase tracking-wider text-xs">Resources</h4>
+            <ul className="space-y-2 font-medium">
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">Resume Templates</a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">Career Blog</a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">ATS Scan Rules</a></li>
             </ul>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="font-bold text-white uppercase tracking-wider text-[10px]">Connect</h4>
-            <ul className="space-y-1.5 font-medium font-light">
-              <li><a href="#" className="hover:text-amber-400 transition-colors flex items-center gap-1"><Github className="w-3 h-3" /><span>GitHub</span></a></li>
-              <li><a href="#" className="hover:text-amber-400 transition-colors">Support</a></li>
+          <div className="space-y-3">
+            <h4 className="font-bold text-white uppercase tracking-wider text-xs">Connect</h4>
+            <ul className="space-y-2 font-medium">
+              <li><a href="#" className="hover:text-cyan-400 transition-colors flex items-center gap-1.5"><Github className="w-3.5 h-3.5" /><span>GitHub</span></a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">Contact Support</a></li>
+              <li><a href="#" className="hover:text-cyan-400 transition-colors">Terms of Service</a></li>
             </ul>
           </div>
 
         </div>
 
-        <div className="max-w-7xl mx-auto pt-6 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-indigo-950/20 font-medium text-center md:text-left">
-          <p>© 2026 Elevate Resume Platform. All rights reserved.</p>
-          <div className="flex space-x-4">
-            <a href="#" className="hover:text-slate-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-slate-400 transition-colors">Terms of Use</a>
+        <div className="max-w-7xl mx-auto pt-6 sm:pt-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-white/5 font-medium text-center md:text-left">
+          <p>© 2026 Elevate Resume Platform. All rights reserved. Your ultimate companion.</p>
+          <div className="flex space-x-6">
+            <a href="#" className="hover:text-cyan-400 transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-cyan-400 transition-colors">Terms of Use</a>
           </div>
         </div>
       </footer>
