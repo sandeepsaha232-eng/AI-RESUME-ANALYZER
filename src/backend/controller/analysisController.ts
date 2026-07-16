@@ -18,6 +18,27 @@ function cleanJsonResponse(text: string): string {
   return cleaned.trim();
 }
 
+// Helper: Run generation with robust newer model fallbacks to prevent 404/NOT_FOUND errors
+async function generateContentWithFallback(contents: string): Promise<any> {
+  const models = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents,
+      });
+      if (response && response.text) {
+        return response;
+      }
+    } catch (e: any) {
+      console.warn(`Model ${model} failed, trying next fallback:`, e.message || e);
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('All Gemini model fallbacks exhausted.');
+}
+
 // POST /api/v1/analyze
 // Performs deterministic scoring and generates recommendations via Gemini API
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -76,10 +97,7 @@ Return a valid JSON object conforming exactly to this structure:
 Provide at least 3-5 high-quality, practical recommendations. Focus on incorporating action verbs, adding quantified achievements/metrics, resolving formatting issues, and adding missing details.
 Output ONLY a valid JSON object. No markdown block, no intro, no wrap.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const response = await generateContentWithFallback(prompt);
 
     try {
       const jsonText = cleanJsonResponse(response.text || '{}');

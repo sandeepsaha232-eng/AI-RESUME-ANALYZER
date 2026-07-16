@@ -1,112 +1,67 @@
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+import React from 'react';
 
 interface AladdinBotProps {
   state?: 'idle' | 'thinking' | 'success' | 'pointing';
 }
 
-// Global coordinate emitter stubbed to avoid import/export errors or runtime reference issues
+// Global coordinate emitter stubbed to prevent import/export reference errors
 export let globalBotTargetSetter: ((x: number, y: number, triggerVortex: boolean) => void) | null = null;
 
 export default function AladdinBot({ state }: AladdinBotProps) {
-  const mountLocalRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    // 1. LOCAL RENDERING: Spinning Golden Magic Lamp (in circular widget)
-    const currentLocalMount = mountLocalRef.current;
-    if (!currentLocalMount) return;
-
-    const localWidth = currentLocalMount.clientWidth || 96;
-    const localHeight = currentLocalMount.clientHeight || 96;
-
-    const localScene = new THREE.Scene();
-    const localCamera = new THREE.PerspectiveCamera(45, localWidth / localHeight, 0.1, 10);
-    localCamera.position.set(0, 0.5, 2.5);
-
-    const localRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    localRenderer.setSize(localWidth, localHeight);
-    localRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    currentLocalMount.appendChild(localRenderer.domElement);
-
-    const localGoldMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      roughness: 0.1,
-      metalness: 0.9,
-    });
-
-    const localLampGroup = new THREE.Group();
-    localScene.add(localLampGroup);
-
-    // Mini Lamp base
-    const baseGeo = new THREE.CylinderGeometry(0.2, 0.23, 0.05, 16);
-    const base = new THREE.Mesh(baseGeo, localGoldMat);
-    localLampGroup.add(base);
-
-    // Mini Lamp body
-    const bodyGeo = new THREE.SphereGeometry(0.3, 16, 16);
-    bodyGeo.scale(1.2, 0.6, 0.8);
-    const body = new THREE.Mesh(bodyGeo, localGoldMat);
-    body.position.y = 0.15;
-    localLampGroup.add(body);
-
-    // Mini spout
-    const spoutGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.3, 12);
-    spoutGeo.rotateZ(Math.PI / 3);
-    const spout = new THREE.Mesh(spoutGeo, localGoldMat);
-    spout.position.set(0.25, 0.25, 0);
-    localLampGroup.add(spout);
-
-    // Mini handle
-    const handleGeo = new THREE.TorusGeometry(0.15, 0.03, 8, 16, Math.PI);
-    handleGeo.rotateZ(-Math.PI / 4);
-    const handle = new THREE.Mesh(handleGeo, localGoldMat);
-    handle.position.set(-0.25, 0.22, 0);
-    localLampGroup.add(handle);
-
-    // Local Light
-    const localAmbient = new THREE.AmbientLight(0xffffff, 0.6);
-    localScene.add(localAmbient);
-    const localDir = new THREE.DirectionalLight(0x00f0ff, 1.5);
-    localDir.position.set(1, 1, 1);
-    localScene.add(localDir);
-
-    let localAnimFrame: number;
-    const animateLocal = () => {
-      localLampGroup.rotation.y += 0.015;
-      localLampGroup.position.y = Math.sin(Date.now() * 0.003) * 0.05;
-      localRenderer.render(localScene, localCamera);
-      localAnimFrame = requestAnimationFrame(animateLocal);
-    };
-    animateLocal();
-
-    // Resize handler for local lamp
-    const handleLocalResize = () => {
-      const w = currentLocalMount.clientWidth || 96;
-      const h = currentLocalMount.clientHeight || 96;
-      localCamera.aspect = w / h;
-      localCamera.updateProjectionMatrix();
-      localRenderer.setSize(w, h);
-    };
-    window.addEventListener('resize', handleLocalResize);
-
-    return () => {
-      cancelAnimationFrame(localAnimFrame);
-      window.removeEventListener('resize', handleLocalResize);
-      if (currentLocalMount && currentLocalMount.contains(localRenderer.domElement)) {
-        currentLocalMount.removeChild(localRenderer.domElement);
-      }
-      localRenderer.dispose();
-      baseGeo.dispose();
-      bodyGeo.dispose();
-      spoutGeo.dispose();
-      handleGeo.dispose();
-      localGoldMat.dispose();
-    };
-  }, []);
-
   return (
-    <div className="w-full h-full flex items-center justify-center relative">
-      <div ref={mountLocalRef} className="w-20 h-20 select-none cursor-pointer" />
+    <div className="w-full h-full flex items-center justify-center relative p-1.5 select-none hover:scale-110 transition-transform duration-350 ease-out">
+      {/* Premium SVG Magic Lamp - Pure Picture Decoration */}
+      <svg
+        viewBox="0 0 100 100"
+        className="w-full h-full filter drop-shadow-[0_0_16px_rgba(234,179,8,0.5)] animate-[pulse_3s_infinite_ease-in-out]"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <linearGradient id="premium-gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fef08a" />
+            <stop offset="40%" stopColor="#facc15" />
+            <stop offset="80%" stopColor="#eab308" />
+            <stop offset="100%" stopColor="#a16207" />
+          </linearGradient>
+          <radialGradient id="lamp-ambient-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(234, 179, 8, 0.25)" />
+            <stop offset="100%" stopColor="rgba(234, 179, 8, 0)" />
+          </radialGradient>
+        </defs>
+
+        {/* Ambient Glow Background */}
+        <circle cx="50" cy="50" r="45" fill="url(#lamp-ambient-glow)" />
+
+        {/* Little Magic Smoke Dust (Decorative) */}
+        <path
+          d="M 68,32 C 73,25 78,35 83,28 C 81,36 74,38 68,32 Z"
+          fill="rgba(254, 240, 138, 0.45)"
+          className="animate-[bounce_2s_infinite_ease-in-out]"
+        />
+
+        {/* Lamp Handle */}
+        <path
+          d="M 28,45 C 14,34 11,66 30,58 C 21,58 19,41 28,45 Z"
+          fill="url(#premium-gold-gradient)"
+          stroke="#ca8a04"
+          strokeWidth="0.5"
+        />
+
+        {/* Lamp Base */}
+        <ellipse cx="50" cy="74" rx="17" ry="5.5" fill="url(#premium-gold-gradient)" stroke="#9a3412" strokeWidth="0.5" />
+        <path d="M 39,73 L 41,67 L 59,67 L 61,73 Z" fill="url(#premium-gold-gradient)" stroke="#9a3412" strokeWidth="0.5" />
+
+        {/* Main Lamp Body */}
+        <path d="M 31,58 C 29,44 71,44 69,58 C 67,69 33,69 31,58 Z" fill="url(#premium-gold-gradient)" stroke="#a16207" strokeWidth="0.5" />
+
+        {/* Lamp Spout */}
+        <path d="M 59,52 C 73,41 83,37 85,41 C 85,45 71,58 63,58 Z" fill="url(#premium-gold-gradient)" stroke="#a16207" strokeWidth="0.5" />
+
+        {/* Lid knob on top */}
+        <path d="M 44,47 C 44,41 56,41 56,47 Z" fill="url(#premium-gold-gradient)" stroke="#ca8a04" strokeWidth="0.5" />
+        <circle cx="50" cy="41" r="2.5" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.5" />
+      </svg>
     </div>
   );
 }
