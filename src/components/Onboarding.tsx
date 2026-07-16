@@ -19,11 +19,38 @@ export default function Onboarding({ onComplete, onCompleteWithParsedResume, onC
 
   // Manual Flow Steps
   const [step, setStep] = useState(1);
-  const [targetTitle, setTargetTitle] = useState('');
+  const [targetTitleSelect, setTargetTitleSelect] = useState('Software Engineer');
+  const [targetTitleCustom, setTargetTitleCustom] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('mid'); // entry, mid, senior, executive
+
+  // Step 1: Contact
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+
+  // Step 3: Education & Honors
+  const [institution, setInstitution] = useState('');
+  const [degree, setDegree] = useState('');
+  const [fieldOfStudy, setFieldOfStudy] = useState('');
+  const [gpa, setGpa] = useState('');
+  const [honors, setHonors] = useState('');
+
+  // Step 4: Projects & Work
+  const [projectName, setProjectName] = useState('');
+  const [projectRole, setProjectRole] = useState('');
+  const [projectBullets, setProjectBullets] = useState('');
+
+  // Step 5: Certifications & Skills
+  const [certName, setCertName] = useState('');
+  const [certIssuer, setCertIssuer] = useState('');
   const [skillsText, setSkillsText] = useState('');
   const [skillsList, setSkillsList] = useState<string[]>([]);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+
+  // Upload Flow States
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [dragActive, setDragActive] = useState(false);
 
   // Upload Flow States
   const [isUploading, setIsUploading] = useState(false);
@@ -59,9 +86,9 @@ export default function Onboarding({ onComplete, onCompleteWithParsedResume, onC
     'React', 'TypeScript', 'Node.js', 'Python', 'Marketing', 'Product Strategy', 'SEO', 'Data Analysis', 'Figma', 'Project Management'
   ];
 
-  const handleNext = () => {
-    if (step === 1 && !targetTitle.trim()) {
-      return;
+  const getTargetTitle = () => {
+    if (targetTitleSelect === 'Other') {
+      return targetTitleCustom.trim() || 'Custom Professional Role';
     }
     if (step < 4) {
       setStep(step + 1);
@@ -150,12 +177,12 @@ export default function Onboarding({ onComplete, onCompleteWithParsedResume, onC
       <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-xl overflow-hidden flex flex-col justify-between min-h-[520px]">
         
         {/* Onboarding Header */}
-        <div className="p-6 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
+        <div className="p-6 border-b border-white/10 dark:border-slate-800/50 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center">
               <Sparkles className="w-4.5 h-4.5 animate-pulse" />
             </div>
-            <span className="font-sans font-semibold text-sm">Personalize Experience</span>
+            <span className="font-sans font-bold text-sm tracking-wide bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Configure Your CV Workspace</span>
           </div>
           
           {flow === 'manual' && (

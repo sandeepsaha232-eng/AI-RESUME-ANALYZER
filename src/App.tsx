@@ -3,6 +3,7 @@ import { Award, Bell, Briefcase, FileText, Laptop, LayoutDashboard, LogOut, Menu
 import { Resume, AppNotification, UserSettings } from './types';
 import { mockResumes } from './data/mockResumes';
 import { safeFetchJson } from './utils/apiHelper';
+import { calculateAtsScore } from './scoringEngine';
 
 // Component imports
 import MarketingLanding from './components/MarketingLanding';
@@ -143,15 +144,43 @@ export default function App() {
 
   // Sync state mutations to localStorage
   useEffect(() => {
-    localStorage.setItem('elevate_resumes', JSON.stringify(resumes));
+    try {
+      localStorage.setItem('elevate_resumes', JSON.stringify(resumes));
+    } catch (e: any) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        console.warn('LocalStorage quota exceeded. Stripping heavy base64 profile pictures to save space...');
+        const stripped = resumes.map(r => ({
+          ...r,
+          personalInfo: {
+            ...r.personalInfo,
+            photoUrl: r.personalInfo.photoUrl && r.personalInfo.photoUrl.length > 2000 ? '[Stripped Base64 Photo to Prevent Storage Quota Crash]' : r.personalInfo.photoUrl
+          }
+        }));
+        try {
+          localStorage.setItem('elevate_resumes', JSON.stringify(stripped));
+        } catch (innerErr) {
+          console.error('Failed to save resumes even after stripping photos:', innerErr);
+        }
+      } else {
+        console.error('Failed to save resumes to localStorage:', e);
+      }
+    }
   }, [resumes]);
 
   useEffect(() => {
-    localStorage.setItem('elevate_notifications', JSON.stringify(notifications));
+    try {
+      localStorage.setItem('elevate_notifications', JSON.stringify(notifications));
+    } catch (e) {
+      console.error('Failed to save notifications to localStorage:', e);
+    }
   }, [notifications]);
 
   useEffect(() => {
-    localStorage.setItem('elevate_settings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('elevate_settings', JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save settings to localStorage:', e);
+    }
   }, [settings]);
 
   // Apply dark mode theme on initial paint
@@ -236,7 +265,38 @@ export default function App() {
     setIsOnboarded(true);
     localStorage.setItem('elevate_is_onboarded', 'true');
 
-    // Create initial custom template resume for the onboarded target role
+    // Build seeded lists from onboarding queries
+    const educationList = data.education ? [{
+      id: `edu-${Date.now()}`,
+      institution: data.education.institution,
+      degree: data.education.degree,
+      fieldOfStudy: data.education.fieldOfStudy,
+      location: data.location || '',
+      startDate: new Date().getFullYear().toString(),
+      endDate: new Date().getFullYear().toString(),
+      current: true,
+      gpa: data.education.gpa
+    }] : [];
+
+    const projectsList = data.projects ? [{
+      id: `proj-${Date.now()}`,
+      name: data.projects.name,
+      role: data.projects.role,
+      url: '',
+      startDate: new Date().getFullYear().toString(),
+      endDate: new Date().getFullYear().toString(),
+      bullets: data.projects.bullets
+    }] : [];
+
+    const certificationsList = data.certifications ? [{
+      id: `cert-${Date.now()}`,
+      name: data.certifications.name,
+      issuer: data.certifications.issuer,
+      date: new Date().getFullYear().toString(),
+      url: ''
+    }] : [];
+
+    // Create initial custom template resume with all the queried details
     const newResume: Resume = {
       id: `res-${Date.now()}`,
       title: `${data.targetTitle} Template`,
@@ -245,21 +305,25 @@ export default function App() {
       personalInfo: {
         fullName: userEmail ? userEmail.split('@')[0] : 'Professional Candidate',
         email: userEmail || 'candidate@example.com',
-        phone: '',
-        location: '',
+        phone: data.phone || '',
+        location: data.location || '',
         website: '',
         linkedin: '',
         github: '',
         photoUrl: data.photoUrl
       },
-      summary: `Motivated and goal-driven professional targeting a career advancement as a ${data.targetTitle}. Dedicated to utilizing solid competencies in ${data.skills.slice(0, 3).join(', ')} to coordinate operations and deliver valuable engineering milestones.`,
+      summary: `Motivated and goal-driven professional targeting a career advancement as a ${data.targetTitle}. Dedicated to utilizing solid competencies in ${data.skills.slice(0, 3).join(', ')} to coordinate operations and deliver valuable engineering milestones.${data.education?.honors ? ` Proud recipient of ${data.education.honors}.` : ''}`,
       experience: [],
-      education: [],
-      projects: [],
+      education: educationList,
+      projects: projectsList,
       skills: data.skills,
-      certifications: [],
+      certifications: certificationsList,
       languages: []
     };
+
+    // Calculate initial ATS score
+    const initialAnalysis = calculateAtsScore(newResume);
+    newResume.atsScore = initialAnalysis.atsScore;
 
     // Save profile attributes to DB
     if (token) {

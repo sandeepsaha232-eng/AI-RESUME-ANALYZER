@@ -183,13 +183,29 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     const mime = req.file.mimetype;
     const filename = req.file.originalname.toLowerCase();
 
-    if (mime === 'application/pdf') {
-      const parsedPdf = await pdfParse(req.file.buffer);
-      extractedText = parsedPdf.text;
-    } else if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || filename.endsWith('.docx')) {
-      const parsedDoc = await mammoth.extractRawText({ buffer: req.file.buffer });
-      extractedText = parsedDoc.value;
-    } else {
+    try {
+      if (mime === 'application/pdf') {
+        try {
+          const parsedPdf = await pdfParse(req.file.buffer);
+          extractedText = parsedPdf.text;
+        } catch (pdfErr: any) {
+          console.error('pdf-parse failed, attempting fallback parsing:', pdfErr);
+          // Fallback basic text decoder to prevent crash on 'bad XRef entry' or encrypted/protected PDFs
+          extractedText = req.file.buffer.toString('utf-8').replace(/[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\xff]/g, ' ');
+        }
+      } else if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || filename.endsWith('.docx')) {
+        try {
+          const parsedDoc = await mammoth.extractRawText({ buffer: req.file.buffer });
+          extractedText = parsedDoc.value;
+        } catch (docxErr: any) {
+          console.error('mammoth failed, fallback to raw buffer string:', docxErr);
+          extractedText = req.file.buffer.toString('utf-8');
+        }
+      } else {
+        extractedText = req.file.buffer.toString('utf-8');
+      }
+    } catch (extractErr: any) {
+      console.error('Universal extractor failed, fallback to string representation:', extractErr);
       extractedText = req.file.buffer.toString('utf-8');
     }
 
