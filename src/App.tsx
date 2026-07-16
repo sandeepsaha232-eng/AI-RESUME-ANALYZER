@@ -261,6 +261,24 @@ export default function App() {
     experienceLevel: string;
     skills: string[];
     photoUrl?: string;
+    phone?: string;
+    location?: string;
+    education?: {
+      institution: string;
+      degree: string;
+      fieldOfStudy: string;
+      gpa: string;
+      honors: string;
+    };
+    projects?: {
+      name: string;
+      role: string;
+      bullets: string[];
+    };
+    certifications?: {
+      name: string;
+      issuer: string;
+    };
   }) => {
     setIsOnboarded(true);
     localStorage.setItem('elevate_is_onboarded', 'true');
