@@ -3,7 +3,9 @@
  * e.g. "SyntaxError: Unexpected token 'A', 'A server e'... is not valid JSON"
  */
 export async function safeFetchJson(url: string, options?: RequestInit): Promise<any> {
-  const response = await fetch(url, options);
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+  const requestUrl = url.startsWith('/api') && apiBaseUrl ? `${apiBaseUrl}${url}` : url;
+  const response = await fetch(requestUrl, options);
   const contentType = response.headers.get('content-type');
 
   let result: any;
@@ -14,7 +16,7 @@ export async function safeFetchJson(url: string, options?: RequestInit): Promise
       throw new Error(`Failed to parse JSON response from server: ${response.status} ${response.statusText}`);
     }
   } else {
-    // Non-JSON response (could be Vercel's or Express's 500 html/text error message)
+    // Non-JSON response (could be a proxy or server 500 html/text error message)
     const text = await response.text();
     // Clean HTML tags if any to expose the pure text error
     const cleanText = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().substring(0, 150);

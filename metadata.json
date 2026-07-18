@@ -1,6 +1,6 @@
 {
   "name": "AI Resume Builder & Analyzer",
-  "description": "An elegant, highly polished React-based AI Resume Builder, ATS Analyzer, and Job Description Matcher featuring interactive resume workspace, client-side analysis, and beautiful visualizers.",
+  "description": "A React and Spring Boot AI Resume Builder, ATS Analyzer, and Job Description Matcher with Groq-powered resume intelligence.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": ["MAJOR_CAPABILITY_SPRING_BOOT_BACKEND", "MAJOR_CAPABILITY_GROQ_AI"]
 }

@@ -1,20 +1,65 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# AI Resume Builder & Analyzer
 
-# Run and deploy your AI Studio app
+This app helps users build, analyze, tailor, and export resumes.
 
-This contains everything you need to run your app locally.
+The backend has been migrated from Node/Express to Spring Boot for clearer structure and better long-term scalability.
 
-View your app in AI Studio: https://ai.studio/apps/fcf0e412-1b96-4728-94df-a6a9b3af7aea
+## Product Flow
 
-## Run Locally
+1. Sign in and save a profile.
+2. Build a resume or upload an existing PDF/DOCX.
+3. Paste a job description.
+4. Get ATS analysis, missing keywords, skill gaps, and AI suggestions.
+5. Improve bullets, generate summaries, write cover letters, and export a clean resume.
 
-**Prerequisites:**  Node.js
+## Project Structure
 
+```text
+src/        React/Vite frontend
+backend/   Spring Boot backend
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Run Frontend
+
+```bash
+npm install
+npm run dev
+```
+
+The Vite dev server proxies `/api` to Spring Boot on `http://localhost:8080`.
+For deployed frontend hosting, set `VITE_API_BASE_URL` to the Spring Boot backend origin.
+
+## Run Backend
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+Backend configuration is environment-variable driven. Use `.env.example` as the placeholder reference.
+
+## Backend Capabilities
+
+- Supabase signup, login, and token verification
+- Profile management
+- Resume CRUD with versioned JSON snapshots
+- PDF/DOCX resume upload parsing
+- Deterministic ATS scoring
+- Groq-powered recommendations, job matching, bullet improvements, summaries, and cover letters
+- Saved job descriptions
+- Health endpoint at `/api/health`
+
+## Database
+
+Run `backend/schema.sql` in Supabase SQL Editor, then configure:
+
+```text
+DATABASE_URL
+DATABASE_USERNAME
+DATABASE_PASSWORD
+SUPABASE_URL
+SUPABASE_PUBLISHABLE_KEY
+GROQ_API_KEY
+```
+
+Never commit real API keys.
